@@ -24,6 +24,10 @@ south :- move(south).
 a :- move(a).
 b :- move(b).
 c :- move(c).
+d :- move(d).
+e :- move(e).
+f :- move(f).
+g :- move(g).
 
 % basic starter to the game
 start :-
@@ -98,6 +102,7 @@ move(Move) :-
 move(_) :-
     write("Invalid move!"), nl, !.
 
+% DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
 interaction(person(dragon)) :-
     inventory(CurrentInventory),
@@ -120,6 +125,65 @@ interaction(person(dragon)) :-
     write("You lose!"), nl,
     write("Type halt. to quit out entirely").
 
+% ZOMBIE ENCOUNTER
+% victory - if player is strong enough to defeat zombie (based on contents of inventory),
+% then an item in inventory is sacrificed to defeat zombie
+interaction(person(zombie)) :-
+    get_strength(person(zombie), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength > MonsterStrength,
+    inventory([I1|_]),
+    item_name(I1, ItemName),
+    write("You desperately throw your "), write(ItemName), write(" at the zombie."), nl,
+    remove_from_inventory(I1),
+    write("Narrowly, you snatch victory from the jaws of defeat! The zombie is vanquished!"), nl,
+    write("You won!"), nl,
+    describe, nl.
+% defeat - if player is NOT strong enough to defeat zombie (based on contents of inventory)
+interaction(person(zombie)) :-
+    get_strength(person(zombie), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength =< MonsterStrength,
+    write("Oh no! The zombie ate your brain!"), nl,
+    write("You lose!"), nl,
+    write("Type halt. to quit out entirely").
+
+% WIZARD ENCOUNTER
+% friendly encounter - wizard upgrades the player's sword to a magic sword
+interaction(person(wizard)) :-
+    inventory(Inventory),
+    member(item(sword), Inventory),
+    remove_from_inventory(item(sword)),
+    add_to_inventory(item(magic_sword)),
+    write("The wizard has upgraded your sword!"), nl,
+    write("How strange: the wizard vanished!"), nl,
+    describe, nl.
+% unfriendly encounter - wizard downgrades the player's magic sword to a sword
+interaction(person(wizard)) :-
+    inventory(Inventory),
+    member(item(magic_sword), Inventory),
+    remove_from_inventory(item(magic_sword)),
+    add_to_inventory(item(sword)),
+    write("Oh no! The wizard has removed the magic from your sword!"), nl,
+    write("How strange: the wizard vanished!"), nl,
+    describe, nl.
+% unfriendly encounter - wizard attacks if the player doesn't have any sword
+interaction(person(wizard)) :-
+    get_strength(person(zombie), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength > MonsterStrength,
+    add_to_inventory(item(gold)),
+    write("You mugged the wizard and took his gold!"), nl,
+    describe, nl.
+interaction(person(wizard)) :-
+    get_strength(person(zombie), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength =< MonsterStrength,
+    add_to_inventory(item(gold)),
+    write("Oh no! The wizard turned you into a frog!"), nl,
+    write("You lose!"), nl,
+    write("Type halt. to quit out entirely").
+
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
 unlock(PathState, Move, State, locked) :-
     inventory(CurrentInventory),
@@ -139,7 +203,6 @@ list_remove(X, [H|T], [H|L]) :-
     list_remove(X,T,L).
 
 
-
 add_to_inventory(item(I)) :-
     inventory(OldInventory),
     item_name(item(I), Name),
@@ -147,6 +210,15 @@ add_to_inventory(item(I)) :-
     retract(inventory(OldInventory)),
     assert(inventory(UpdatedInventory)),
     write(Name), write(" has been added to your inventory!"), nl,
+    describe, nl.
+
+remove_from_inventory(item(I)) :-
+    inventory(OldInventory),
+    item_name(item(I), Name),
+    list_remove(item(I), OldInventory, UpdatedInventory),
+    retract(inventory(OldInventory)),
+    assert(inventory(UpdatedInventory)),
+    write(Name), write(" has been removed from your inventory."), nl,
     describe, nl.
 
 list_add(I, [], [I]).
@@ -214,6 +286,10 @@ path(north_state_1, south, start_state, unlocked).
 % path(east_state_1, b, item(shield)).
 % path(west_state_1, a, item(potion)).
 
+% path(west_state_1, b, item(zombie)).
+% path(west_state_1, c, item(dragon)).
+% path(east_state_1, c, item(wizard)).
+
 is_state(start_state).
 is_state(east_state_1).
 is_state(west_state_1).
@@ -232,17 +308,45 @@ help :-
 % Items their position in start of game. Currently only in states, future could be in chests, boxes, given to player by NPC etc.
 % may change formatting so that its: item(name, property, value), (ex, item(sword, position, east_state_1)) 
 
+% MONSTERS
+% monsters placed at start of game, later move??????????
+
 :-dynamic(position/2).
 :-dynamic(input/2).
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
 position(person(dragon), north_state_2).
+position(person(zombie), east_state_1).
+position(person(wizard), west_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
-input(person(dragon), a).
+input(person(dragon), a).   % should we make these overlap? like "press b to grab that sheild AND attack that zombie - you MUST do neither or both"????
+input(person(zombie), c).
+input(person(wizard), b).
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
+item_name(item(magic_sword), 'Magic Sword').
+item_name(item(gold), 'Gold Bullion').
 person_name(person(dragon), "Boss Dragon").
+person_name(person(zombie), "zombie").
+person_name(person(wizard), "wizard").
+
+get_player_strength(PlayerStrength) :-
+    inventory(Inventory),
+    get_sum_inventory_strength(PlayerStrength, Inventory).
+get_sum_inventory_strength(0, []).
+get_sum_inventory_strength(Strength, [H|T]) :-
+    get_strength(H, ItemStrength),
+    get_sum_inventory_strength(ListStrength, T),
+    Strength is ListStrength + ItemStrength.
+get_strength(item(sword), 3).
+get_strength(item(shield), 2).
+get_strength(item(key), 0).
+get_strength(item(magic_sword), 6).
+get_strength(item(gold), 1).
+get_strength(person(zombie), 4).
+get_strength(person(dragon), 4).
+get_strength(person(wizard), 4).
