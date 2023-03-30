@@ -22,6 +22,10 @@ south :- move(south).
 a :- move(a).
 b :- move(b).
 c :- move(c).
+d :- move(d).
+e :- move(e).
+f :- move(f).
+g :- move(g).
 
 % basic starter to the game
 start :-
@@ -70,6 +74,13 @@ move(Move) :-
     retract(position((item(I)), State)),
     retract(input(item(I), Move)),
     add_to_inventory(item(I)), !.
+move(Move) :-
+    current_state(State),
+    position(monster(M), State),
+    input(monster(M), Move), 
+    retract(position((monster(M)), State)),
+    retract(input(monster(M), Move)),
+    attack_monster(monster(M)), !.
     
 move(_) :-
     write("Invalid move!"), nl, !.
@@ -78,6 +89,20 @@ move(_) :-
 
 
 
+% victory
+attack_monster(monster(M)) :-
+    get_strength(monster(M), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength =< MonsterStrength,
+    write("you won the combat!"), nl,
+    describe, nl.
+% defeat
+attack_monster(monster(M)) :-
+    get_strength(monster(M), MonsterStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength =< MonsterStrength,
+    write("you lost the combat!"), nl,
+    describe, nl.
 
 add_to_inventory(item(I)) :-
     inventory(OldInventory),
@@ -109,7 +134,8 @@ write_bag([item(H)|T]) :-
 % gets all contents in state and writes them to terminal
 write_state_contents(State) :-
     position(I, State),
-    write_items([I]), fail.
+    write_items([I]),
+    write_monsters([I]), fail.
 
 write_state_contents(_).
 
@@ -118,8 +144,22 @@ write_items([]).
 write_items([H|T]) :-
     item_name(H,N),
     input(H,I),
-    write("Type "), write(I), write(" for "), write(N), nl,
+    write("Type "), write(I), write(" to take "), write(N), nl,
     write_items(T).
+write_items([H|T]) :-
+    not(item_name(H,_)),
+    write_items(T).
+
+% writes monsters to terminal
+write_monsters([]).
+write_monsters([H|T]) :-
+    monster_name(H,N),
+    input(H,I),
+    write("Type "), write(I), write(" to attack "), write(N), nl,
+    write_monsters(T).
+write_monsters([H|T]) :-
+    not(monster_name(H,_)),
+    write_monsters(T).
 
 exits(State) :-
     path(State, Move, Exit),
@@ -131,7 +171,7 @@ write_exits(Move, Exit) :-
 
 
 :-dynamic(path/3).
-% paths describe relation between Current_State, move, next_state/interaction
+% paths describe relation between Current_State, move, next_state / interaction
 
 path(start_state, east, east_state_1).
 path(east_state_1, west, start_state).
@@ -141,6 +181,10 @@ path(west_state_1, east, start_state).
 % path(east_state_1, a, item(sword)).
 % path(east_state_1, b, item(shield)).
 % path(west_state_1, a, item(potion)).
+
+% path(west_state_1, b, item(zombie)).
+% path(west_state_1, c, item(dragon)).
+% path(east_state_1, c, item(wizard)).
 
 is_state(start_state).
 is_state(east_state_1).
@@ -158,14 +202,46 @@ help :-
 % Items their position in start of game. Currently only in states, future could be in chests, boxes, given to player by NPC etc.
 % may change formatting so that its: item(name, property, value), (ex, item(sword, position, east_state_1)) 
 
+% MONSTERS
+% monsters placed at start of game, later move??????????
+
 :-dynamic(position/2).
 :-dynamic(input/2).
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(potion), west_state_1).
+
+position(monster(zombie), west_state_1).
+position(monster(dragon), west_state_1).
+position(monster(wizard), east_state_1).
+
 input(item(sword), a).
 input(item(shield), b).
 input(item(potion), a).
+
+input(monster(zombie), b).    % maybe we should have overlapping commands, like "press b to grab that sheild AND attack that zombie - you MUST do both"????
+input(monster(dragon), c).
+input(monster(wizard), c).
+
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
 item_name(item(potion), 'Potion').
+
+monster_name(monster(zombie), 'Zombie').
+monster_name(monster(dragon), 'Dragon').
+monster_name(monster(wizard), 'Wizard').
+
+get_player_strength(PlayerStrength) :-
+    inventory(Inventory),
+    get_sum_inventory_strength(PlayerStrength, Inventory).
+get_sum_inventory_strength(0, []).
+get_sum_inventory_strength(Strength, [H|T]) :-
+    get_strength(item(H), ItemStrength),
+    get_sum_inventory_strength(ListStrength, T),
+    Strength == ListStrength + ItemStrength.
+get_strength(item(sword), 3).
+get_strength(item(shield), 3).
+get_strength(item(potion), 3).
+get_strength(monster(zombie), 4).
+get_strength(monster(dragon), 4).
+get_strength(monster(wizard), 4).
