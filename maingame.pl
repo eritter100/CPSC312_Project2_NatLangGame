@@ -35,6 +35,7 @@ g :- move(g).
 start :-
     current_state(State),
     inventory(Inventory),
+    reset_state_items(Inventory),
     retract(inventory(Inventory)),
     assert(inventory([])), % add reset states func 
     retract(current_state(State)),
@@ -249,7 +250,38 @@ remove_from_inventory(item(I)) :-
 list_add(I, [], [I]).
 list_add(I, [H|T], [I|[H|T]]).
 
-
+% Resets items in states according to inventory
+% gold doesnt effect states
+reset_state_items([item(gold)|T]) :-
+    reset_state_items(T).
+% reset sword to east_state_1
+reset_state_items([H|T]) :-
+    \+ dif(H, item(sword)),
+    \+ (position(H, east_state_1)),
+    assert(position(H, east_state_1)),
+    assert(input(H, a)),
+    reset_state_items(T).
+% reset shield to east_state_1
+reset_state_items([H|T]) :-
+    \+ dif(H, item(shield)),
+    \+ (position(H, east_state_1)),
+    assert(position(H, east_state_1)),
+    assert(input(H, b)),
+    reset_state_items(T).
+% reset key to west_state_1
+reset_state_items([H|T]) :-
+    \+ dif(H, item(key)),
+    \+ (position(H, west_state_1)),
+    assert(position(H, west_state_1)),
+    assert(input(H, a)),
+    reset_state_items(T).
+% if key was used (not in inventory when restarting) then reset key
+reset_state_items([]) :-
+    \+ (position(item(key), west_state_1)),
+    assert(position(item(key), west_state_1)),
+    assert(input(item(key), a)).
+% base case
+reset_state_items([]).
 
 % call bag to check contents of inventory
 bag :-
