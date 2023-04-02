@@ -4,6 +4,7 @@
 :- dynamic(current_state/1).
 :- dynamic(inventory/1).
 :- dynamic(position/1).
+:- dynamic(life_status/1).
 
 % retract current state to start_state for beginning of game
 :- retractall(current_state(_)).
@@ -12,6 +13,7 @@
 % starting inventory (list of strings), (maybe make a triple that corrends name of item to item?)
 inventory([]).
 current_state(start_state).
+life_status(alive).
 
 % basic movement inputs , not nat-lang yet
 % for direction
@@ -34,16 +36,22 @@ start :-
     current_state(State),
     inventory(Inventory),
     retract(inventory(Inventory)),
-    assert(inventory([])), % add reset states func
+    assert(inventory([])), % add reset states func 
     retract(current_state(State)),
     assert(current_state(start_state)),
+    life_status(Status),
+    retract(life_status(Status)),
+    assert(life_status(alive)),
     describe, !.
 
 % describe is used to describe the current state 
 describe :-
+    life_status(alive),
     current_state(State),
     write_state(State).
 
+describe :-
+    write("You are dead! There is nothing to describe!").
 % write_state writes out the environment of every state to the screen, as well as how they connect to other states
 write_state(start_state) :-
     tutorial, nl, nl, nl,
@@ -84,6 +92,7 @@ move(Move) :-
     is_state(NewState), 
     retract(current_state(PreviousState)),
     assert(current_state(NewState)),
+    life_status(alive),
     describe, !.
 
 move(Move) :-
@@ -92,15 +101,22 @@ move(Move) :-
     input(item(I), Move), 
     retract(position((item(I)), State)),
     retract(input(item(I), Move)),
+    life_status(alive),
     add_to_inventory(item(I)), !.
 
 move(Move) :-
     current_state(State),
     position(person(P), State),
     input(person(P), Move),
+    life_status(alive),
     interaction(person(P)), !.
 move(_) :-
+    life_status(alive),
     write("Invalid move!"), nl, !.
+
+move(_) :-
+    life_status(dead),
+    write("Ummm... your dead!"), nl, !.
 
 % DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
@@ -110,7 +126,7 @@ interaction(person(dragon)) :-
     member(item(shield), CurrentInventory),
     write("You repel the dragon's flames with your shield, and slice his neck with your sword!"), nl,
     write("You have beat the adventure game!"), nl,
-    write("Type halt. to quit out entirely").
+    write("Type halt. to quit out entirely, or start. to do it again!").
 
 interaction(person(dragon)) :-
     inventory(CurrentInventory),
@@ -118,12 +134,15 @@ interaction(person(dragon)) :-
     write("You repel the dragon's flames with your shield!"), nl,
     write("But with no weapon, you cannot damage the dragon and grow too tired to fight!"), nl,
     write("You lose!"), nl,
-    write("Type halt. to quit out entirely").
+    write("Type halt. to quit out entirely, or start. to try again!").
 
 interaction(person(dragon)) :-
+    life_status(Status),
+    retract(life_status(Status)),
+    assert(life_status(dead)),
     write("The dragon burns you with his fiery breath!"), nl,
     write("You lose!"), nl,
-    write("Type halt. to quit out entirely").
+    write("Type halt. to quit out entirely, or start. to try again!").
 
 % ZOMBIE ENCOUNTER
 % victory - if player is strong enough to defeat zombie (based on contents of inventory),
@@ -144,12 +163,15 @@ interaction(person(zombie)) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
+    life_status(Status),
+    retract(life_status(Status)),
+    assert(life_status(dead)),
     write("Oh no! The zombie ate your brain!"), nl,
     write("You lose!"), nl,
-    write("Type halt. to quit out entirely").
+    write("Type halt. to quit out entirely, or start. to try again!").
 
 % WIZARD ENCOUNTER
-% friendly encounter - wizard upgrades the player's sword to a magic sword
+% friendly encounter - wizard upgrades the players sword to a magic sword
 interaction(person(wizard)) :-
     inventory(Inventory),
     member(item(sword), Inventory),
@@ -158,7 +180,7 @@ interaction(person(wizard)) :-
     write("The wizard has upgraded your sword!"), nl,
     write("How strange: the wizard vanished!"), nl,
     describe, nl.
-% unfriendly encounter - wizard downgrades the player's magic sword to a sword
+% unfriendly encounter - wizard downgrades the players magic sword to a sword
 interaction(person(wizard)) :-
     inventory(Inventory),
     member(item(magic_sword), Inventory),
@@ -167,7 +189,7 @@ interaction(person(wizard)) :-
     write("Oh no! The wizard has removed the magic from your sword!"), nl,
     write("How strange: the wizard vanished!"), nl,
     describe, nl.
-% unfriendly encounter - wizard attacks if the player doesn't have any sword
+% unfriendly encounter - wizard attacks if the player doesnt have any sword
 interaction(person(wizard)) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
@@ -180,9 +202,12 @@ interaction(person(wizard)) :-
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
     add_to_inventory(item(gold)),
+    life_status(Status),
+    retract(life_status(Status)),
+    assert(life_status(dead)),
     write("Oh no! The wizard turned you into a frog!"), nl,
     write("You lose!"), nl,
-    write("Type halt. to quit out entirely").
+    write("Type halt. to quit out entirely, or start. to try again!").
 
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
 unlock(PathState, Move, State, locked) :-
@@ -228,6 +253,7 @@ list_add(I, [H|T], [I|[H|T]]).
 
 % call bag to check contents of inventory
 bag :-
+    life_status(alive),
     inventory(Inventory),
     write("Here is the contents of your bag:"), nl,
     write_bag(Inventory), !.
@@ -350,3 +376,4 @@ get_strength(item(gold), 1).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
 get_strength(person(wizard), 4).
+
