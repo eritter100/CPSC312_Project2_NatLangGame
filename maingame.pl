@@ -123,9 +123,9 @@ move(_) :-
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
 interaction(person(dragon)) :-
     inventory(CurrentInventory),
-    member(item(sword), CurrentInventory),
+    member(item(magic_sword), CurrentInventory),
     member(item(shield), CurrentInventory),
-    write("You repel the dragon's flames with your shield, and slice his neck with your sword!"), nl,
+    write("You repel the dragon's flames with your shield, and pierce the thick scales on his neck with your magic sword!"), nl,
     write("You have beat the adventure game!"), nl,
     write("Type halt. to quit out entirely, or start. to do it again!").
 
@@ -134,6 +134,15 @@ interaction(person(dragon)) :-
     member(item(shield), CurrentInventory),
     write("You repel the dragon's flames with your shield!"), nl,
     write("But with no weapon, you cannot damage the dragon and grow too tired to fight!"), nl,
+    write("You lose!"), nl,
+    write("Type halt. to quit out entirely, or start. to try again!").
+
+interaction(person(dragon)) :-
+    inventory(CurrentInventory),
+    member(item(shield), CurrentInventory),
+    member(item(sword), CurrentInventory),
+    write("You repel the dragon's flames with your shield!"), nl,
+    write("But your simple sword can't pierce his tough skin! The dragon won't take any damage!"), nl,
     write("You lose!"), nl,
     write("Type halt. to quit out entirely, or start. to try again!").
 
@@ -254,12 +263,18 @@ list_add(I, [H|T], [I|[H|T]]).
 % gold doesnt effect states
 reset_state_items([item(gold)|T]) :-
     reset_state_items(T).
-% reset sword to east_state_1
+% reset sword to east_state_1, including if upgraded to magic sword
 reset_state_items([H|T]) :-
     \+ dif(H, item(sword)),
     \+ (position(H, east_state_1)),
     assert(position(H, east_state_1)),
     assert(input(H, a)),
+    reset_state_items(T).
+reset_state_items([H|T]) :-
+    \+ dif(H, item(magic_sword)),
+    \+ (position(item(sword), east_state_1)),
+    assert(position(item(sword), east_state_1)),
+    assert(input(item(sword), a)),
     reset_state_items(T).
 % reset shield to east_state_1
 reset_state_items([H|T]) :-
