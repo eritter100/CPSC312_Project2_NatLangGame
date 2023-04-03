@@ -5,6 +5,7 @@
 :- dynamic(inventory/1).
 :- dynamic(position/1).
 :- dynamic(life_status/1).
+:- dynamic(tutorial_needed/1).
 
 % retract current state to start_state for beginning of game
 :- retractall(current_state(_)).
@@ -14,6 +15,7 @@
 inventory([]).
 current_state(start_state).
 life_status(alive).
+tutorial_needed(yes).
 
 % basic movement inputs , not nat-lang yet
 % for direction
@@ -55,9 +57,19 @@ describe :-
     write("You are dead! There is nothing to describe!").
 % write_state writes out the environment of every state to the screen, as well as how they connect to other states
 write_state(start_state) :-
+    tutorial_needed(Status), (\+ dif(yes, Status)),
     tutorial, nl, nl, nl,
-    write("You are in start_state right now"), nl,
-    write("Contents of start_state are as follows:"), nl,
+    retract(tutorial_needed(Status)),
+    assert(tutorial_needed(no)),
+    write("To the east you see zaps of bright lights breaking from the treeline."), nl,
+    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl,
+    write_state_contents(start_state), nl,
+    exits(start_state), nl.
+
+write_state(start_state) :-
+    write("You stand in the center of a lavender heath."), nl,
+    write("To the east you see zaps of bright lights breaking from the treeline."), nl,
+    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
@@ -373,7 +385,8 @@ tutorial :-
     write("Welcome to the game, this is a text-based adventure game!"), nl,
     write("Current basic rules are as follows:"), nl,
     write("To move in a direction, type one of: east, west, south, north, followed by a ."), nl,
-    write("Type 'help.' for more help on commands"), nl.
+    write("Type 'help.' for more help on commands"), nl, nl, nl, nl,
+    write("You wake up in the middle of a peaceful, lavender heath surrounded by forest. Some may even call it the central heath."), nl.
 help :-
     write("list of all commands go here").
 
