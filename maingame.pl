@@ -66,13 +66,13 @@ write_state(start_state) :-
     exits(start_state), nl.
 
 write_state(start_state) :-
-    write("You stand in the center of a lavender heath surrounded by cliffs and forest."), nl,
+    describe_current_location, nl,
     describe_neighbours, nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
 write_state(west_state_1) :-
-    write("You are on atop the cliffside. The land is barren and wind is fierce."), nl, nl,
+    describe_current_location, nl,
     describe_neighbours, nl,
     write("Beside you on a granite rock, a large key someone must have forgotten."), nl,
     write("At the opposite end of the cliffside a wizard is practicing his spells, shooting violent black and purple zaps of lightening."), nl, nl,
@@ -80,7 +80,7 @@ write_state(west_state_1) :-
     exits(west_state_1), nl.
 
 write_state(east_state_1) :-
-    write("You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you."), nl, nl,
+    describe_current_location, nl,
     describe_neighbours, nl,
     write("To your right, a tiny, rusted sword. You don't think about the one who dropped it."), nl,
     write("To your left, a heavy shield. You really don't want to think about who dropped it."), nl,
@@ -89,14 +89,14 @@ write_state(east_state_1) :-
     exits(east_state_1), nl.
 
 write_state(north_state_1) :-
-    write("You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet."), nl, nl,
+    describe_current_location, nl,
     describe_neighbours, nl,
     write("Behind the gate you see plumes of dark smoke rising into the air."), nl, nl,
     write_state_contents(north_state_1), nl,
     exits(north_state_1), nl.
 
 write_state(north_state_2) :-
-    write("You are in some sort of dragon nest. Carcasses and old scales scatter the ground."), nl, nl,
+    describe_current_location, nl,
     describe_neighbours, nl,
     write("In front of you is a massive, red dragon. He's busy with his lunch so he doesn't notice you at first."), nl, nl,
     write_state_contents(north_state_2), nl,
@@ -455,11 +455,23 @@ state_neighbour_description(east_state_1, "a worn down gravel path, darkened by 
 state_neighbour_description(north_state_1, "a massive limestone wall with a large black gate.").
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
 
+% describe the current location
+state_current_description(west_state_1, "You are on atop the cliffside. The land is barren and wind is fierce.").
+state_current_description(start_state, "You stand in the center of a lavender heath surrounded by cliffs and forest.").
+state_current_description(east_state_1, "You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you.").
+state_current_description(north_state_1, "You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet.").
+state_current_description(north_state_2, "You are in some sort of dragon nest. Carcasses and old scales scatter the ground.").
+
 % describing directions to locations
 direction_description(east, "To the east, ").
 direction_description(north, "To the north, ").
 direction_description(west, "To the west, ").
 direction_description(south, "To the south, ").
+
+describe_current_location :-
+    current_state(State),
+	state_current_description(State, Description),
+	write(Description), nl.
 
 describe_neighbours :-
     describe_neighbour(north),
@@ -472,7 +484,7 @@ describe_neighbour(Direction) :-
     path(State, Direction, NeighbourState, _),
     direction_description(Direction, DescriptionPart1),
     state_neighbour_description(NeighbourState, DescriptionPart2),
-    write(DescriptionPart1), write(DescriptionPart2), nl, !.
+    write(DescriptionPart1), write(DescriptionPart2), nl.
 % if there isn't a location in that direction, don't write anything
 describe_neighbour(Direction) :-
     current_state(State),
