@@ -61,39 +61,47 @@ write_state(start_state) :-
     tutorial, nl, nl, nl,
     retract(tutorial_needed(Status)),
     assert(tutorial_needed(no)),
-    write("To the east you see zaps of bright lights breaking from the treeline."), nl,
+    write("To the east you see zaps of bright lights breaking from atop the cliffside."), nl,
     write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl,
+    write("To the north, a massive limestone wall with a large black gate."), nl, nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
 write_state(start_state) :-
-    write("You stand in the center of a lavender heath."), nl,
-    write("To the east you see zaps of bright lights breaking from the treeline."), nl,
-    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl,
+    write("You stand in the center of a lavender heath surrounded by cliffs and forest."), nl,
+    write("To the east you see zaps of bright lights breaking from atop the cliffside."), nl,
+    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl, nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
 write_state(east_state_1) :-
-    write("You are in east_state_1 right now"), nl, nl,
-    write("Contents of east_state_1 are as follows:"), nl, nl,
+    write("You are on atop the cliffside. The land is barren and wind is fierce."), nl, nl,
+    write("To the west is the peaceful, lavender heath."), nl,
+    write("Beside you on a granite rock, a large key someone must have forgotten."), nl,
+    write("At the opposite end of the cliffside a wizard is practicing his spells, shooting violent black and purple zaps of lightening."), nl, nl,
     write_state_contents(east_state_1), nl,
     exits(east_state_1), nl.
 
 write_state(west_state_1) :-
-    write("You are in west_state_1 right now"), nl, nl,
-    write("Contents of west_state_1 are as follows:"), nl, nl,
+    write("You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you."), nl, nl,
+    write("To the east is the peaceful lavender heath."), nl,
+    write("To your right, a tiny, rusted sword. You don't think about the one who dropped it."), nl,
+    write("To your left, a heavy shield. You really don't want to think about who dropped it."), nl,
+    write("Just past a large, rotting stump you see a zombie hunched over something."), nl, nl,
     write_state_contents(west_state_1), nl,
     exits(west_state_1), nl.
 
 write_state(north_state_1) :-
-    write("You are in north_state_1 right now. To north is a large, black gate shrouded in plumes of smoke."), nl, nl,
-    write("Contents of north_state_1 are as follows:"), nl, nl,
+    write("You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet."), nl, nl,
+    write("To the south is the peaceful lavender heath."), nl,
+    write("Behind the gate you see plumes of dark smoke rising into the air."), nl, nl,
     write_state_contents(north_state_1), nl,
     exits(north_state_1), nl.
 
 write_state(north_state_2) :-
-    write("You are in north_state_2 right now"), nl, nl,
-    write("Contents of north_state_2 are as follows:"), nl, nl,
+    write("You are in some sort of dragon nest. Carcasses and old scales scatter the ground."), nl, nl,
+    write("To the south is the open gate."), nl, 
+    write("Infront of you is a massive, red dragon. He's busy with his lunch so he doesn't notice you at first."), nl, nl,
     write_state_contents(north_state_2), nl,
     exits(north_state_2), nl.
 
@@ -350,10 +358,12 @@ exits(State) :-
 exits(_).
 
 write_exits(Move, Exit, unlocked) :-
-    write("Type "), write(Move), write(" for "), write(Exit), nl.
+    state_name(Exit, Name),
+    write("Type "), write(Move), write(" to go to "), write(Name), nl.
 
 write_exits(Move, Exit, locked) :-
-    write("Type "), write(Move), write(" for "), write(Exit), write(" [LOCKED]"), nl.
+    state_name(Exit, Name),
+    write("Type "), write(Move), write(" to  "), write(Name), write(" [LOCKED]"), nl.
 
 :-dynamic(path/4).
 % paths describe relation between Current_State, move, next_state, and next_state_lock_status
@@ -386,7 +396,7 @@ tutorial :-
     write("Current basic rules are as follows:"), nl,
     write("To move in a direction, type one of: east, west, south, north, followed by a ."), nl,
     write("Type 'help.' for more help on commands"), nl, nl, nl, nl,
-    write("You wake up in the middle of a peaceful, lavender heath surrounded by forest. Some may even call it the central heath."), nl.
+    write("You wake up in the middle of a peaceful, lavender heath surrounded by forest and cliffs. Some may even call it the central heath."), nl.
 help :-
     write("list of all commands go here").
 
@@ -419,6 +429,11 @@ item_name(item(gold), 'Gold Bullion').
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
+state_name(east_state_1, "cliffs").
+state_name(start_state, "lavender heath").
+state_name(west_state_1, "dark forest path").
+state_name(north_state_1, "black gate").
+state_name(north_state_2, "open gate").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
