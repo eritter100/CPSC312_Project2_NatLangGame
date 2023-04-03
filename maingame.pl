@@ -123,14 +123,17 @@ move(Move) :-
     retract(position((item(I)), State)),
     retract(input(item(I), Move)),
     life_status(alive),
-    add_to_inventory(item(I)), !.
+    add_to_inventory(item(I)), describe, !.
 
 move(Move) :-
     current_state(State),
     position(person(P), State),
     input(person(P), Move),
     life_status(alive),
-    interaction(person(P)), !.
+    interaction(person(P)),
+    retract(position(person(P), State)),
+    retract(input(person(P), Move)), describe,
+    !.
 move(_) :-
     life_status(alive),
     write("Invalid move!"), nl, !.
@@ -187,7 +190,7 @@ interaction(person(zombie)) :-
     remove_from_inventory(I1),
     write("Narrowly, you snatch victory from the jaws of defeat! The zombie is vanquished!"), nl,
     write("You won!"), nl,
-    describe, nl.
+    nl.
 % defeat - if player is NOT strong enough to defeat zombie (based on contents of inventory)
 interaction(person(zombie)) :-
     get_strength(person(zombie), MonsterStrength),
@@ -209,7 +212,7 @@ interaction(person(wizard)) :-
     add_to_inventory(item(magic_sword)),
     write("The wizard has upgraded your sword!"), nl,
     write("How strange: the wizard vanished!"), nl,
-    describe, nl.
+    nl.
 % unfriendly encounter - wizard downgrades the players magic sword to a sword
 interaction(person(wizard)) :-
     inventory(Inventory),
@@ -218,7 +221,7 @@ interaction(person(wizard)) :-
     add_to_inventory(item(sword)),
     write("Oh no! The wizard has removed the magic from your sword!"), nl,
     write("How strange: the wizard vanished!"), nl,
-    describe, nl.
+    nl.
 % unfriendly encounter - wizard attacks if the player doesnt have any sword
 interaction(person(wizard)) :-
     get_strength(person(zombie), MonsterStrength),
@@ -226,7 +229,7 @@ interaction(person(wizard)) :-
     PlayerStrength > MonsterStrength,
     add_to_inventory(item(gold)),
     write("You mugged the wizard and took his gold!"), nl,
-    describe, nl.
+    nl.
 interaction(person(wizard)) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
