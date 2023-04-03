@@ -61,35 +61,35 @@ write_state(start_state) :-
     tutorial, nl, nl, nl,
     retract(tutorial_needed(Status)),
     assert(tutorial_needed(no)),
-    write("To the east you see zaps of bright lights breaking from atop the cliffside."), nl,
-    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl,
+    write("To the west you see zaps of bright lights breaking from atop the cliffside."), nl,
+    write("To the east, a worn down gravel path, darkened by the canopy of the forest."), nl,
     write("To the north, a massive limestone wall with a large black gate."), nl, nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
 write_state(start_state) :-
     write("You stand in the center of a lavender heath surrounded by cliffs and forest."), nl,
-    write("To the east you see zaps of bright lights breaking from atop the cliffside."), nl,
-    write("To the west, a worn down gravel path, darkened by the canopy of the forest."), nl, nl,
+    write("To the west you see zaps of bright lights breaking from atop the cliffside."), nl,
+    write("To the east, a worn down gravel path, darkened by the canopy of the forest."), nl, nl,
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
-write_state(east_state_1) :-
+write_state(west_state_1) :-
     write("You are on atop the cliffside. The land is barren and wind is fierce."), nl, nl,
-    write("To the west is the peaceful, lavender heath."), nl,
+    write("To the east is the peaceful, lavender heath."), nl,
     write("Beside you on a granite rock, a large key someone must have forgotten."), nl,
     write("At the opposite end of the cliffside a wizard is practicing his spells, shooting violent black and purple zaps of lightening."), nl, nl,
-    write_state_contents(east_state_1), nl,
-    exits(east_state_1), nl.
+    write_state_contents(west_state_1), nl,
+    exits(west_state_1), nl.
 
-write_state(west_state_1) :-
+write_state(east_state_1) :-
     write("You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you."), nl, nl,
-    write("To the east is the peaceful lavender heath."), nl,
+    write("To the west is the peaceful lavender heath."), nl,
     write("To your right, a tiny, rusted sword. You don't think about the one who dropped it."), nl,
     write("To your left, a heavy shield. You really don't want to think about who dropped it."), nl,
     write("Just past a large, rotting stump you see a zombie hunched over something."), nl, nl,
-    write_state_contents(west_state_1), nl,
-    exits(west_state_1), nl.
+    write_state_contents(east_state_1), nl,
+    exits(east_state_1), nl.
 
 write_state(north_state_1) :-
     write("You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet."), nl, nl,
@@ -265,7 +265,7 @@ add_to_inventory(item(I)) :-
     retract(inventory(OldInventory)),
     assert(inventory(UpdatedInventory)),
     write(Name), write(" has been added to your inventory!"), nl,
-    describe, nl.
+    nl.
 
 remove_from_inventory(item(I)) :-
     inventory(OldInventory),
@@ -274,7 +274,7 @@ remove_from_inventory(item(I)) :-
     retract(inventory(OldInventory)),
     assert(inventory(UpdatedInventory)),
     write(Name), write(" has been removed from your inventory."), nl,
-    describe, nl.
+    nl.
 
 list_add(I, [], [I]).
 list_add(I, [H|T], [I|[H|T]]).
@@ -429,9 +429,9 @@ item_name(item(gold), 'Gold Bullion').
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
-state_name(east_state_1, "cliffs").
+state_name(west_state_1, "cliffs").
 state_name(start_state, "lavender heath").
-state_name(west_state_1, "dark forest path").
+state_name(east_state_1, "dark forest path").
 state_name(north_state_1, "black gate").
 state_name(north_state_2, "open gate").
 
