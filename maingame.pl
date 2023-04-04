@@ -65,42 +65,12 @@ write_state(start_state) :-
     write_state_contents(start_state), nl,
     exits(start_state), nl.
 
-write_state(start_state) :-
+write_state(State) :-
     describe_current_location, nl,
     describe_neighbours, nl,
-    write_state_contents(start_state), nl,
-    exits(start_state), nl.
-
-write_state(west_state_1) :-
-    describe_current_location, nl,
-    describe_neighbours, nl,
-    write("Beside you on a granite rock, a large key someone must have forgotten."), nl,
-    write("At the opposite end of the cliffside a wizard is practicing his spells, shooting violent black and purple zaps of lightening."), nl, nl,
-    write_state_contents(west_state_1), nl,
-    exits(west_state_1), nl.
-
-write_state(east_state_1) :-
-    describe_current_location, nl,
-    describe_neighbours, nl,
-    write("To your right, a tiny, rusted sword. You don't think about the one who dropped it."), nl,
-    write("To your left, a heavy shield. You really don't want to think about who dropped it."), nl,
-    write("Just past a large, rotting stump you see a zombie hunched over something."), nl, nl,
-    write_state_contents(east_state_1), nl,
-    exits(east_state_1), nl.
-
-write_state(north_state_1) :-
-    describe_current_location, nl,
-    describe_neighbours, nl,
-    write("Behind the gate you see plumes of dark smoke rising into the air."), nl, nl,
-    write_state_contents(north_state_1), nl,
-    exits(north_state_1), nl.
-
-write_state(north_state_2) :-
-    describe_current_location, nl,
-    describe_neighbours, nl,
-    write("In front of you is a massive, red dragon. He's busy with his lunch so he doesn't notice you at first."), nl, nl,
-    write_state_contents(north_state_2), nl,
-    exits(north_state_2), nl.
+    long_describe_contents, nl,
+    write_state_contents(State), nl,
+    exits(State), nl.
 
 
 move(Move) :-
@@ -393,7 +363,7 @@ position(person(wizard), west_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
-input(person(dragon), a).   % should we make these overlap? like "press b to grab that sheild AND attack that zombie - you MUST do neither or both"????
+input(person(dragon), a).
 input(person(zombie), c).
 input(person(wizard), b).
 item_name(item(sword), 'Sword').
@@ -404,6 +374,15 @@ item_name(item(gold), 'Gold Bullion').
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
+
+description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
+description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
+description_long(item(key), "a large key someone must have forgotten.").
+description_long(item(magic_sword), "a greatsword, massive and glowing with epic glory.").
+description_long(item(gold), "a large, stained sack of gold.").
+description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
+description_long(person(zombie), "a zombie hunched over something.").
+description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
@@ -468,10 +447,51 @@ direction_description(north, "To the north, ").
 direction_description(west, "To the west, ").
 direction_description(south, "To the south, ").
 
+% describe placement of items, thematically related to location
+item_prefix(west_state_1, a, "Beside you on a granite rock, ").
+item_prefix(west_state_1, b, "At the opposite end of the cliffside ").
+item_prefix(west_state_1, c, "In a small damp cave, you see ").
+item_prefix(west_state_1, d, "Hanging off a small windswept tree with scars from lightning strikes ").
+item_prefix(west_state_1, e, "Half-buried under a small rockslide ").
+item_prefix(start_state, a, "Half-hidden under the flowers, you notice ").
+item_prefix(start_state, b, "At your feet there is ").
+item_prefix(start_state, c, "Amid a swarm of beautiful butterflies, ").
+item_prefix(start_state, d, "Beside you, ").
+item_prefix(start_state, e, "Sitting in the sunlight, ").
+item_prefix(east_state_1, a, "On the mossy earth, ").
+item_prefix(east_state_1, b, "Leaning against a large gnarled tree, ").
+item_prefix(east_state_1, c, "Just past a large, rotting stump you see ").
+item_prefix(east_state_1, d, "Hanging off a nearby tree branch, there is ").
+item_prefix(east_state_1, e, "Sitting in a muddy creek, ").
+item_prefix(north_state_1, a, "To your right, ").
+item_prefix(north_state_1, b, "To your left, ").
+item_prefix(north_state_1, c, "Sitting before you, there is ").
+item_prefix(north_state_1, d, "In a small crevase tucked behind some menacing stalactites, you notice ").
+item_prefix(north_state_1, e, "At your feet, you see ").
+item_prefix(north_state_2, a, "Half-buried in charred bones, there is ").
+item_prefix(north_state_2, b, "Beneath a heap of leathern scales, you see ").
+item_prefix(north_state_2, c, "Behind a smoking mound, ").
+item_prefix(north_state_2, d, "Sitting in a clutch of dragon eggs, there is ").
+item_prefix(north_state_2, e, "Becide you, ").
+
+long_describe_contents :-
+    current_state(State),
+    position(I, State),
+    long_describe_item([I], State), fail.
+long_describe_contents.
+
+long_describe_item([], _).
+long_describe_item([H|T], State) :-
+    input(H, InputIndex),
+    item_prefix(State, InputIndex, DescriptionPart1),
+    description_long(H, DescriptionPart2),
+    write(DescriptionPart1), write(DescriptionPart2), nl,
+    long_describe_item(T, State).
+
 describe_current_location :-
     current_state(State),
-	state_current_description(State, Description),
-	write(Description), nl.
+    state_current_description(State, Description),
+    write(Description), nl.
 
 describe_neighbours :-
     describe_neighbour(north),
@@ -488,4 +508,4 @@ describe_neighbour(Direction) :-
 % if there isn't a location in that direction, don't write anything
 describe_neighbour(Direction) :-
     current_state(State),
-	not(path(State, Direction, _, _)).
+    not(path(State, Direction, _, _)).
