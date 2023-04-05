@@ -124,8 +124,7 @@ interaction(person(dragon)) :-
     member(item(shield), CurrentInventory),
     write("You repel the dragon's flames with your shield!"), nl,
     write("But with no weapon, you cannot damage the dragon and grow too tired to fight!"), nl,
-    write("You lose!"), nl,
-    write("Type halt. to quit out entirely, or start. to try again!").
+    die.
 
 interaction(person(dragon)) :-
     inventory(CurrentInventory),
@@ -133,8 +132,7 @@ interaction(person(dragon)) :-
     member(item(sword), CurrentInventory),
     write("You repel the dragon's flames with your shield!"), nl,
     write("But your simple sword can't pierce his tough skin! The dragon won't take any damage!"), nl,
-    write("You lose!"), nl,
-    write("Type halt. to quit out entirely, or start. to try again!").
+    die.
 
 interaction(person(dragon)) :-
     write("The dragon burns you with his fiery breath!"), nl,
