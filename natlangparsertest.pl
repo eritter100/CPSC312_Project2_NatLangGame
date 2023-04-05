@@ -48,7 +48,7 @@ noun_phrase(L0, L2, Ind) :-
     det(L0, L1, Ind),
     noun(L1, L2, Ind).
 
-make_command(V, N, [V|N]).
+make_command(V, N, [V,N]).
 
 det(["the" | L], L,_).
 det(["a" | L], L,_).
@@ -68,22 +68,55 @@ verb(["move"| L], L, Ind) :- move_verb(Ind).
 verb(["go"| L], L, Ind) :- move_verb(Ind).
 verb(["walk"| L], L, Ind) :- move_verb(Ind).
 
+verb(["take"| L], L, Ind) :- take_verb(Ind).
+verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
+verb(["stache"| L], L, Ind) :- take_verb(Ind).
+verb(["get"| L], L, Ind) :- take_verb(Ind).
+
+verb(["look"| L], L, Ind) :- describe_verb(Ind).
+verb(["look", "around" | L], L, Ind) :- describe_verb(Ind).
+verb(["describe"| L], L, Ind) :- describe_verb(Ind).
+
+verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
+
 noun(["south" | L], L, Ind) :- south_noun(Ind).
 noun(["down" | L], L, Ind) :- south_noun(Ind).
-
 noun(["west" | L], L, Ind) :- west_noun(Ind).
 noun(["left" | L], L, Ind) :- west_noun(Ind).
-
 noun(["east" | L], L, Ind) :- east_noun(Ind).
 noun(["right" | L], L, Ind) :- east_noun(Ind).
-
 noun(["north" | L], L, Ind) :- north_noun(Ind).
 noun(["up" | L], L, Ind) :- north_noun(Ind).
 
-move_verb(move).
+noun(["key" | L], L, Ind) :- key_noun(Ind).
+noun(["sword" | L], L, Ind) :- sword_noun(Ind).
+noun(["shield" | L], L, Ind) :- shield_noun(Ind).
+noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
+noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
+
+
+
+% we could make it so that we only have 1 move verb clause (the one below)
+% and then use that to execute all types of moves (motion, interaction, fight)
+% or we could make more clauses (interact_verb, fight_verb, etc.)
+
+move_verb(move). 
+take_verb(move). % we use move for picking up items so use move here too (for now)
+
+describe_verb(describe). % call with current state
+
+inventory_verb(bag). % what we call it in the other file
 
 north_noun(north).
 south_noun(south).
 east_noun(east).
 west_noun(west).
+
+key_noun(key).
+sword_noun(sword).
+shield_noun(shield).
+
+wizard_noun(wizard).
+zombie_noun(zombie).
+
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
