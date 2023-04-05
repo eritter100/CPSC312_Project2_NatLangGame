@@ -202,7 +202,7 @@ die :-
     retract(life_status(Status)),
     assert(life_status(dead)),
     write("You lose!"), nl,
-    write("Type halt. to quit out entirely, or start. to try again!").
+    write("Type halt. to quit out entirely, or start. to try again!"), nl.
 
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
 unlock(PathState, Move, State, locked) :-
@@ -447,7 +447,7 @@ item_prefix(west_state_1, a, "Beside you on a granite rock, ").
 item_prefix(west_state_1, b, "At the opposite end of the cliffside ").
 item_prefix(west_state_1, c, "In a small damp cave, you see ").
 item_prefix(west_state_1, d, "Hanging off a small windswept tree with scars from lightning strikes ").
-item_prefix(west_state_1, e, "Half-buried under a small rockslide ").
+item_prefix(west_state_1, e, "Half-buried under a small rockslide is ").
 item_prefix(start_state, a, "Half-hidden under the flowers, you notice ").
 item_prefix(start_state, b, "At your feet there is ").
 item_prefix(start_state, c, "Amid a swarm of beautiful butterflies, ").
@@ -467,7 +467,7 @@ item_prefix(north_state_2, a, "Half-buried in charred bones, there is ").
 item_prefix(north_state_2, b, "Beneath a heap of leathern scales, you see ").
 item_prefix(north_state_2, c, "Behind a smoking mound, ").
 item_prefix(north_state_2, d, "Sitting in a clutch of dragon eggs, there is ").
-item_prefix(north_state_2, e, "Becide you, ").
+item_prefix(north_state_2, e, "Beside you, ").
 
 long_describe_contents :-
     current_state(State),
