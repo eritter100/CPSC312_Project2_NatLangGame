@@ -137,12 +137,8 @@ interaction(person(dragon)) :-
     write("Type halt. to quit out entirely, or start. to try again!").
 
 interaction(person(dragon)) :-
-    life_status(Status),
-    retract(life_status(Status)),
-    assert(life_status(dead)),
     write("The dragon burns you with his fiery breath!"), nl,
-    write("You lose!"), nl,
-    write("Type halt. to quit out entirely, or start. to try again!").
+    die.
 
 % ZOMBIE ENCOUNTER
 % victory - if player is strong enough to defeat zombie (based on contents of inventory),
@@ -163,12 +159,8 @@ interaction(person(zombie)) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
-    life_status(Status),
-    retract(life_status(Status)),
-    assert(life_status(dead)),
     write("Oh no! The zombie ate your brain!"), nl,
-    write("You lose!"), nl,
-    write("Type halt. to quit out entirely, or start. to try again!").
+    die.
 
 % WIZARD ENCOUNTER
 % friendly encounter - wizard upgrades the players sword to a magic sword
@@ -191,21 +183,24 @@ interaction(person(wizard)) :-
     nl.
 % unfriendly encounter - wizard attacks if the player doesnt have any sword
 interaction(person(wizard)) :-
-    get_strength(person(zombie), MonsterStrength),
+    get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength > MonsterStrength,
     add_to_inventory(item(gold)),
     write("You mugged the wizard and took his gold!"), nl,
     nl.
 interaction(person(wizard)) :-
-    get_strength(person(zombie), MonsterStrength),
+    get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
     add_to_inventory(item(gold)),
+    write("Oh no! The wizard turned you into a frog!"), nl,
+    die.
+
+die :-
     life_status(Status),
     retract(life_status(Status)),
     assert(life_status(dead)),
-    write("Oh no! The wizard turned you into a frog!"), nl,
     write("You lose!"), nl,
     write("Type halt. to quit out entirely, or start. to try again!").
 
