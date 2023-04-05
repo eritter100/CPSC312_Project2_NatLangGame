@@ -117,7 +117,7 @@ interaction(person(dragon)) :-
     member(item(shield), CurrentInventory),
     write("You repel the dragon's flames with your shield, and pierce the thick scales on his neck with your magic sword!"), nl,
     write("You have beat the adventure game!"), nl,
-    write("Type halt. to quit out entirely, or start. to do it again!").
+    restart_instructions.
 
 interaction(person(dragon)) :-
     inventory(CurrentInventory),
@@ -197,11 +197,16 @@ interaction(person(wizard)) :-
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
 
+% assertions and prints after player death
 die :-
     life_status(Status),
     retract(life_status(Status)),
     assert(life_status(dead)),
     write("You lose!"), nl,
+    restart_instructions.
+
+% instruct player on how to restart game (upon clear or death)
+restart_instructions :-
     write("Type halt. to quit out entirely, or start. to try again!"), nl.
 
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
