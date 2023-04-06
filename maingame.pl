@@ -3,6 +3,7 @@
 %
 :- dynamic(current_state/1).
 :- dynamic(inventory/1).
+:- dynamic(removed_person_list/1).
 :- dynamic(position/1).
 :- dynamic(life_status/1).
 :- dynamic(tutorial_needed/1).
@@ -10,9 +11,11 @@
 % retract current state to start_state for beginning of game
 :- retractall(current_state(_)).
 :- retractall(inventory(_)).
+:- retractall(removed_person_list(_)).
 
 % starting inventory (list of strings), (maybe make a triple that corrends name of item to item?)
 inventory([]).
+removed_person_list([]).
 current_state(start_state).
 life_status(alive).
 tutorial_needed(yes).
@@ -36,6 +39,10 @@ g :- move(g).
 % basic starter to the game
 start :-
     current_state(State),
+    removed_person_list(Characters),
+    return_characters_from_removed_person_list(Characters),
+    retract(removed_person_list(Characters)),
+    assert(removed_person_list([])),
     inventory(Inventory),
     reset_state_items(Inventory),
     retract(inventory(Inventory)),
@@ -98,6 +105,7 @@ move(Move) :-
     input(person(P), Move),
     life_status(alive),
     interaction(person(P)),
+    add_to_removed_person_list(position(person(P), State)),
     retract(position(person(P), State)),
     retract(input(person(P), Move)), describe,
     !.
@@ -320,6 +328,35 @@ write_contents([H|T]) :-
     write("Type "), write(I), write(" to interact with "), write(N), nl,
     write_contents(T).
 
+add_to_removed_person_list(position(person(P), State)) :-
+    removed_person_list(Old_person_list),
+    list_add(position(person(P), State), Old_person_list, New_person_list),
+    retract(removed_person_list(Old_person_list)),
+    assert(removed_person_list(New_person_list)).
+    
+% return wizard / zombie / dragon / etc. to start position at start of each game
+return_characters_from_removed_person_list([position(person(P), State)|T]) :-
+    assert(position(person(P), State)),
+    get_next_option_index(State, Option),
+    assert(input(person(P), Option)),
+    return_characters_from_removed_person_list(T).
+return_characters_from_removed_person_list([]).
+
+% next option
+next_option(a,b).
+next_option(b,c).
+next_option(c,d).
+next_option(d,e).
+
+get_next_option_index(State, Option) :-
+    position(I, State),
+    increment_contents([I], a, Option). % , fail.
+increment_contents([_|T], CurrentOption, FinalOption) :-
+    next_option(CurrentOption, NextOption),
+    increment_contents(T, NextOption, FinalOption).
+increment_contents([], CurrentOption, FinalOption) :-
+    next_option(CurrentOption, FinalOption).
+
 exits(State) :-
     path(State, Move, Exit, LockStatus),
     write_exits(Move, Exit, LockStatus), fail.
@@ -379,7 +416,7 @@ description_long(item(key), "a large key someone must have forgotten.").
 description_long(item(magic_sword), "a greatsword, massive and glowing with epic glory.").
 description_long(item(gold), "a large, stained sack of gold.").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
-description_long(person(zombie), "a zombie hunched over something.").
+description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
 
 get_player_strength(PlayerStrength) :-
