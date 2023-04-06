@@ -28,7 +28,8 @@ say(OutputCommand) :-
     write("What do you do? "), nl, flush_output(current_output),
     read_line_to_string(user_input, String),
     split_string(String, " -", " ,?.!-", Ln),
-    parsecommand(Ln,_,OutputCommand).
+    parsecommand(Ln,_,OutputCommand),
+    execute_command(OutputCommand).
 
 % parsecommand(InputCommand, ExecutedOutputCommand) :-
 %    command(InputCommand, OutputCommand),
@@ -38,7 +39,7 @@ say(OutputCommand) :-
 parsecommand(L0,L2, Command) :-
     verb_phrase(L0, L1, C1),
     noun_phrase(L1,L2, C2),
-    make_command(C1, C2, Command).
+    make_command_list(C1, C2, Command).
 
 verb_phrase(L0, L2, Ind):-
     verb(L0, L1, Ind),
@@ -50,6 +51,18 @@ noun_phrase(L0, L2, Ind) :-
 
 make_command(V, N, [V,N]).
 
+% execute commands takes the parsed command (verb = action) (noun = thing), and performs such command
+execute_command([move, Thing]) :-
+    move(Thing).
+execute_command([bag,_]) :-
+    bag.
+execute_command([describe, _]) :-
+    describe.
+execute_command(_) :-
+    write('you made other option').
+
+
+
 det(["the" | L], L,_).
 det(["a" | L], L,_).
 det(["this" | L], L,_).
@@ -59,9 +72,8 @@ det(L, L,_).
 prep(["to"| L], L, _).
 prep(["to", "the"| L], L, _).
 prep(["into"| L], L, _).
-prep(["into", "the"|  L], L, _).
+prep(["into"|  L], L, _).
 prep(["in", "to"| L], L, _).
-prep(["in", "to", "the"| L], L, _).
 prep(L, L, _).
 
 verb(["move"| L], L, Ind) :- move_verb(Ind).
@@ -83,6 +95,10 @@ noun(["south" | L], L, Ind) :- south_noun(Ind).
 noun(["down" | L], L, Ind) :- south_noun(Ind).
 noun(["west" | L], L, Ind) :- west_noun(Ind).
 noun(["left" | L], L, Ind) :- west_noun(Ind).
+
+% EX
+% noun(["cliffs" | L], L, Ind) :- west_noun(Ind), the state with cliffs is neighboriing the current_state (ie current_state = state with west_neighbor = cliffs_state)
+
 noun(["east" | L], L, Ind) :- east_noun(Ind).
 noun(["right" | L], L, Ind) :- east_noun(Ind).
 noun(["north" | L], L, Ind) :- north_noun(Ind).

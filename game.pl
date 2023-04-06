@@ -1,6 +1,5 @@
-% maingame
-% prolog
-%
+% gamefile with natural language processing
+
 :- dynamic(current_state/1).
 :- dynamic(inventory/1).
 :- dynamic(removed_person_list/1).
@@ -19,15 +18,18 @@ removed_person_list([]).
 current_state(start_state).
 life_status(alive).
 tutorial_needed(yes).
+game_won(no).
 
 % basic movement inputs , not nat-lang yet
 % for direction
+/*
 east :- move(east).
 west :- move(west).
 north :- move(north).
 south :- move(south).
-
+*/
 % basic controls for interactions
+/*
 a :- move(a).
 b :- move(b).
 c :- move(c).
@@ -35,7 +37,7 @@ d :- move(d).
 e :- move(e).
 f :- move(f).
 g :- move(g).
-
+*/
 % basic starter to the game
 start :-
     current_state(State),
@@ -52,7 +54,169 @@ start :-
     life_status(Status),
     retract(life_status(Status)),
     assert(life_status(alive)),
+    describe, gameloop.
+
+% loops game for every input you give, only stopping when game_over is true (win, die, quit, reset)
+gameloop :-
+    repeat,
+    say(InputCommand),
+    parsecommand(InputCommand,_,OutputCommand),
+    execute_command(OutputCommand), 
+    game_over_command(OutputCommand), !.
+
+
+
+
+
+% NATURAL LANGUAGE PROCESSOR
+
+% prompts user to input, and tokenizes input into list
+say(Ln) :-
+    write("What do you do? "), nl, flush_output(current_output),
+    read_line_to_string(user_input, String),
+    split_string(String, " -", " ,?.!-", Ln), !.
+
+% true if L0 and L2 form difference list that is a legal command
+parsecommand(L0,L2, Command) :-
+    verb_phrase(L0, L1, C1),
+    noun_phrase(L1,L2, C2),
+    make_command_list(C1, C2, Command), !.
+% for simple commands that are verb only
+parsecommand(L0,L1, Command) :-
+    verb_phrase(L0, L1, C1),
+    make_command_list(C1, [], Command), !.
+% for commands that are unparseable (nonsense, no context, etc.)
+parsecommand(_,_,_) :-
+    write("What are you thinking!"), nl, fail.
+
+% L0 and L2 make up a difference list that is a legal verb phrase (verb+preposition (to))
+verb_phrase(L0, L2, Ind):-
+    verb(L0, L1, Ind),
+    prep(L1,L2, Ind), !.
+
+% L0 and L2 make up a difference list that is a legal noun phrase
+noun_phrase(L0, L2, Ind) :-
+    det(L0, L1, Ind),
+    noun(L1, L2, Ind), !.
+
+% creates a list that of action (verb) and object (noun)
+make_command_list(V, N, [V|N]).
+
+% execute commands takes the parsed command (verb = action) (noun = thing), and performs such command
+execute_command([move|Thing]) :-
+    is_direction_move(Thing),
+    move(Thing), !.
+execute_command([move|Thing]) :-
+    input(Thing, I),
+    move(I), !.
+execute_command([bag|_]) :-
+    bag, !.
+execute_command([describe|_]) :-
     describe, !.
+execute_command([die|_]) :-
+    die, !.
+execute_command(_) :-
+    write("There is a time and place for everything, but not now!").
+
+game_over_command(_) :-
+    life_status(dead), nl,
+    write("write this when player dies!!!!").
+game_over_command(_) :-
+    game_won(yes), nl,
+    write("write this when win!!").
+
+is_direction_move(north).
+is_direction_move(south).
+is_direction_move(east).
+is_direction_move(west).
+
+det(["the" | L], L,_).
+det(["a" | L], L,_).
+det(["this" | L], L,_).
+det(["that" | L], L,_).
+det(L, L,_).
+
+prep(["to"| L], L, _).
+prep(["to", "the"| L], L, _).
+prep(["into"| L], L, _).
+prep(["into"|  L], L, _).
+prep(["in", "to"| L], L, _).
+prep(L, L, _).
+
+verb(["die"| L], L, Ind) :- die_verb(Ind).
+
+verb(["move"| L], L, Ind) :- move_verb(Ind).
+verb(["go"| L], L, Ind) :- move_verb(Ind).
+verb(["walk"| L], L, Ind) :- move_verb(Ind).
+verb(["interact"| L], L, Ind) :- move_verb(Ind). % interactions could be deepened!
+verb(["fight"| L], L, Ind) :- move_verb(Ind).
+
+verb(["take"| L], L, Ind) :- take_verb(Ind).
+verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
+verb(["stache"| L], L, Ind) :- take_verb(Ind).
+verb(["get"| L], L, Ind) :- take_verb(Ind).
+
+verb(["look"| L], L, Ind) :- describe_verb(Ind).
+verb(["look", "around" | L], L, Ind) :- describe_verb(Ind).
+verb(["describe"| L], L, Ind) :- describe_verb(Ind).
+
+verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
+
+noun(["south" | L], L, Ind) :- south_noun(Ind).
+noun(["down" | L], L, Ind) :- south_noun(Ind).
+noun(["west" | L], L, Ind) :- west_noun(Ind).
+noun(["left" | L], L, Ind) :- west_noun(Ind).
+
+% EX (could abstract this more)
+noun(["cliffs" | L], L, Ind) :- 
+    current_state(State),
+    path(State, Move, west_state_1, _), % check if the cliffs_state (west_state_1) has a path to current state
+    Ind = Move.
+
+noun(["cliffside" | L], L, Ind) :- 
+    current_state(State),
+    path(State, Move, west_state_1, _), % check if the cliffside_state (west_state_1) has a path to current state
+    Ind = Move.
+
+noun(["east" | L], L, Ind) :- east_noun(Ind).
+noun(["right" | L], L, Ind) :- east_noun(Ind).
+noun(["north" | L], L, Ind) :- north_noun(Ind).
+noun(["up" | L], L, Ind) :- north_noun(Ind).
+
+noun(["key" | L], L, Ind) :- key_noun(Ind).
+noun(["sword" | L], L, Ind) :- sword_noun(Ind).
+noun(["shield" | L], L, Ind) :- shield_noun(Ind).
+noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
+noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
+noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
+
+% we could make it so that we only have 1 move verb clause (the one below)
+% and then use that to execute all types of moves (motion, interaction, fight)
+% or we could make more clauses (interact_verb, fight_verb, etc.)
+
+die_verb(die).
+
+move_verb(move). 
+take_verb(move). % we use move for picking up items so use move here too (for now)
+
+describe_verb(describe). % call with current state
+
+inventory_verb(bag). % what we call it in the other file
+
+north_noun(north).
+south_noun(south).
+east_noun(east).
+west_noun(west).
+
+key_noun(item(key)).
+sword_noun(item(sword)).
+shield_noun(item(shield)).
+
+wizard_noun(person(wizard)).
+zombie_noun(person(zombie)).
+dragon_noun(person(dragon)).
+
+% north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
 % describe is used to describe the current state 
 describe :-
@@ -125,6 +289,9 @@ interaction(person(dragon)) :-
     member(item(shield), CurrentInventory),
     write("You repel the dragon's flames with your shield, and pierce the thick scales on his neck with your magic sword!"), nl,
     write("You have beat the adventure game!"), nl,
+    game_won(Status),
+    retract(game_won(Status)),
+    assert(game_won(yes)),
     restart_instructions.
 
 interaction(person(dragon)) :-
@@ -544,3 +711,5 @@ describe_neighbour(Direction) :-
 describe_neighbour(Direction) :-
     current_state(State),
     not(path(State, Direction, _, _)).
+
+
