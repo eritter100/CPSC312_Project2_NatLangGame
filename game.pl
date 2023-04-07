@@ -267,6 +267,15 @@ move(Move) :-
     assert(current_state(NewState)),
     life_status(alive),
     describe, !.
+% trying to move to locked place
+move(Move) :-
+    current_state(PreviousState),
+    path(PreviousState, Move, _, LockStatus),
+    dif(LockStatus, unlocked),
+    \+ unlock(PreviousState, Move, _, LockStatus), % path is NOT unlocked, and we CANNOT unlock it
+    write("You cannot proceed! Maybe there is an item around that will help you?"), nl, % in the future, add specific text (for gate and cliffs)
+    life_status(alive),
+    describe, !.
 
 move(_) :-
     life_status(alive),
