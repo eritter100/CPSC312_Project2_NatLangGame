@@ -363,6 +363,13 @@ reset_state_items([]) :-
     \+ (position(item(key), west_state_1)),
     assert(position(item(key), west_state_1)),
     assert(input(item(key), a)).
+% reset map to south_east_state_1
+reset_state_items([H|T]) :-
+    \+ dif(H, item(gameMap)),
+    \+ (position(H, south_east_state_1)),
+    assert(position(H, south_east_state_1)),
+%    assert(input(H, a)),
+    reset_state_items(T).
 % base case
 reset_state_items([]).
 
