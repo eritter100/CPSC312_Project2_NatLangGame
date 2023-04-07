@@ -413,14 +413,15 @@ restart_instructions :-
     write("Type halt. to quit out entirely, or start. to try again!"), nl.
 
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
-unlock(PathState, Move, State, locked) :-
+unlock(PathState, Move, State, UnlockItem) :-
     inventory(CurrentInventory),
-    member(item(key), CurrentInventory),
-    write("Used key! Door has been unlocked!"), nl,
-    list_remove(item(key), CurrentInventory, NewInventory),
+    member(UnlockItem, CurrentInventory),
+    item_name(UnlockItem, Name),
+    write("Used: "), write(Name), write(". You now proceed!"), nl,
+    list_remove(UnlockItem, CurrentInventory, NewInventory),
     retract(inventory(CurrentInventory)),
     assert(inventory(NewInventory)),
-    retract(path(PathState, Move, State, locked)),
+    retract(path(PathState, Move, State, UnlockItem)),
     assert(path(PathState, Move, State, unlocked)).
 
 % removes only first instance of element
@@ -563,9 +564,10 @@ write_exits(Move, Exit, unlocked) :-
     state_name(Exit, Name),
     write("Type "), write(Move), write(" to go to "), write(Name), nl.
 
-write_exits(Move, Exit, locked) :-
+write_exits(Move, Exit, UnlockItem) :-
     state_name(Exit, Name),
-    write("Type "), write(Move), write(" to  "), write(Name), write(" [LOCKED]"), nl.
+    item_name(UnlockItem, ItemName),
+    write("Type "), write(Move), write(" to  "), write(Name), write(" [LOCKED, REQUIRES: "), write(ItemName), write(" ]"), nl.
 
 
 tutorial :-
@@ -639,13 +641,14 @@ get_strength(person(wizard), 4).
 
 :-dynamic(path/4).
 % paths describe relation between Current_State, move, next_state, and next_state_lock_status
+% lock status is either: unlocked, or an item that is required to unlock the state
 
 path(start_state, east, east_state_1, unlocked).
 path(east_state_1, west, start_state, unlocked).
 path(start_state, west, west_state_1, unlocked).
 path(west_state_1, east, start_state, unlocked).
 path(start_state, north, north_state_1, unlocked).
-path(north_state_1, north, north_state_2, locked). % game finale state
+path(north_state_1, north, north_state_2, item(key)). % game finale state
 path(north_state_2, south, north_state_1, unlocked).
 path(north_state_1, south, start_state, unlocked).
 
