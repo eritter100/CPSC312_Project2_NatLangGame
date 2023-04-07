@@ -414,6 +414,40 @@ interaction(person(wizard)) :-
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
 
+% WISHING WELL ENCOUNTER
+% friendly encounter - well upgrades the players gold to a magic sword
+interaction(person(well)) :-
+    inventory(Inventory),
+    member(item(gold), Inventory),
+    remove_from_inventory(item(gold)),
+    add_to_inventory(item(magic_sword)),
+    write("On impulse, you toss your sack of gold bullion into the well."), nl,
+    write("The well seems to glow with rainbows. Suddenly you find yourself holding a magic sword!"), nl,
+    write("As the multi-coloured light fades, you notice that the well has vanished."), nl,
+    nl.
+% friendly encounter - is you have a normal sword, the well summons a wizard
+interaction(person(well)) :-
+    inventory(Inventory),
+    member(item(sword), Inventory),
+    current_state(State),
+    assert(position(person(wizard), State)),
+    get_next_option_index(State, Option),
+    assert(input(person(wizard), Option)),
+    write("The wishing well growls ominously."), nl,
+    write("You draw your sword to attack, but suddenly the well transforms into a wizard!"), nl,
+    nl.
+% neutral encounter - the well gives you life advice and teleports you somewhere else
+interaction(person(well)) :-
+    write("You lean over the well, entranced."), nl,
+    write("\'Oh brave hero!\' The well calls out, \'You must defeat the dragon! To do that, you must have a magic sword."),
+    write(" To reach the dragon you must also have a key.\'"), nl,
+    write("Panicking, you walk into the well and... land in some strange new place"), nl,
+    current_state(State),
+    retract(current_state(State)),
+    assert(current_state(start_state)),
+    move(north),
+    nl.
+
 % assertions and prints after player death
 die :-
     life_status(Status),
@@ -614,9 +648,11 @@ position(item(shield), east_state_1).
 position(item(key), west_state_1).
 % position(inspectable(pile_of_rocks), west_state_1).
 position(item(boots), north_state_1).
+position(person(well), south_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
 position(person(wizard), west_state_1).
+position(person(wizard), south_east_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
@@ -624,6 +660,7 @@ input(item(boots), a).
 input(person(dragon), a).
 input(person(zombie), c).
 input(person(wizard), b).
+input(person(well), a).
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
@@ -634,6 +671,7 @@ inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
+person_name(person(well), 'Magic Well').
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -644,6 +682,7 @@ description_long(item(boots), " a heavy pair of leather boots, perfect for scali
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
+description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
