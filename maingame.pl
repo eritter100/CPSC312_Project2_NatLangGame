@@ -234,7 +234,7 @@ interaction(person(well)) :-
     write("You lean over the well, entranced."), nl,
     write("\'Oh brave hero!\' The well calls out, \'You must defeat the dragon! To do that, you must have a magic sword."),
     write(" To reach the dragon you must also have a key.\'"), nl,
-    write("Panicking, you wall into the well and... land in some strange new place"), nl,
+    write("Panicking, you walk into the well and... land in some strange new place"), nl,
     current_state(State),
     retract(current_state(State)),
     assert(current_state(start_state)),
