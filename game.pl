@@ -199,6 +199,7 @@ noun(["north" | L], L, Ind) :- north_noun(Ind).
 noun(["key" | L], L, Ind) :- key_noun(Ind).
 noun(["sword" | L], L, Ind) :- sword_noun(Ind).
 noun(["shield" | L], L, Ind) :- shield_noun(Ind).
+noun(["map" | L], L, Ind) :- map_noun(Ind).
 noun(["boots"| L], L, Ind) :- boots_noun(Ind).
 noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
@@ -226,6 +227,7 @@ west_noun(west).
 key_noun(item(key)).
 sword_noun(item(sword)).
 shield_noun(item(shield)).
+map_noun(item(gameMap)).
 boots_noun(item(boots)).
 
 wizard_noun(person(wizard)).
@@ -649,6 +651,7 @@ position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
 % position(inspectable(pile_of_rocks), west_state_1).
+position(item(gameMap), south_east_state_1).
 position(item(boots), north_state_1).
 position(person(well), south_state_1).
 position(person(dragon), north_state_2).
@@ -658,6 +661,7 @@ position(person(wizard), south_east_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
+input(item(gameMap), a).
 input(item(boots), a).
 input(person(dragon), a).
 input(person(zombie), c).
@@ -668,6 +672,7 @@ item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
 item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
+item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 person_name(person(dragon), "Boss Dragon").
@@ -680,6 +685,7 @@ description_long(item(shield), "a heavy shield, cracked and bloodstained. You RE
 description_long(item(key), "a large key someone must have forgotten.").
 description_long(item(magic_sword), "a greatsword, massive and glowing with epic glory.").
 description_long(item(gold), "a large, stained sack of gold.").
+description_long(item(gameMap), "a large, crumbling parchment map.").
 description_long(item(boots), " a heavy pair of leather boots, perfect for scaling cliffs!").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
