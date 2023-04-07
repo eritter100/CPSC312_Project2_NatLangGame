@@ -196,6 +196,7 @@ noun(["up" | L], L, Ind) :- north_noun(Ind).
 noun(["key" | L], L, Ind) :- key_noun(Ind).
 noun(["sword" | L], L, Ind) :- sword_noun(Ind).
 noun(["shield" | L], L, Ind) :- shield_noun(Ind).
+noun(["boots"| L], L, Ind) :- boots_noun(Ind).
 noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
@@ -221,6 +222,7 @@ west_noun(west).
 key_noun(item(key)).
 sword_noun(item(sword)).
 shield_noun(item(shield)).
+boots_noun(item(boots)).
 
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
@@ -600,13 +602,15 @@ help :-
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
-position(inspectable(pile_of_rocks), west_state_1).
+% position(inspectable(pile_of_rocks), west_state_1).
+position(item(boots), north_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
 position(person(wizard), west_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
+input(item(boots), a).
 input(person(dragon), a).
 input(person(zombie), c).
 input(person(wizard), b).
@@ -615,6 +619,7 @@ item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
 item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
+item_name(item(boots), 'Hiking Boots').
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
@@ -625,6 +630,7 @@ description_long(item(shield), "a heavy shield, cracked and bloodstained. You RE
 description_long(item(key), "a large key someone must have forgotten.").
 description_long(item(magic_sword), "a greatsword, massive and glowing with epic glory.").
 description_long(item(gold), "a large, stained sack of gold.").
+description_long(item(boots), " a heavy pair of leather boots, perfect for scaling cliffs!").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
@@ -654,7 +660,7 @@ get_strength(person(wizard), 4).
 
 path(start_state, east, east_state_1, unlocked).
 path(east_state_1, west, start_state, unlocked).
-path(start_state, west, west_state_1, unlocked).
+path(start_state, west, west_state_1, item(boots)).
 path(west_state_1, east, start_state, unlocked).
 path(start_state, north, north_state_1, unlocked).
 path(north_state_1, north, north_state_2, item(key)). % game finale state
@@ -694,7 +700,7 @@ direction_description(west, "To the west, ").
 direction_description(south, "To the south, ").
 
 % describe placement of items, thematically related to location
-item_prefix(west_state_1, a, "Beside you a pile of rocks, ").
+item_prefix(west_state_1, a, "Beside you a pile of rocks, and ").
 item_prefix(west_state_1, b, "At the opposite end of the cliffside ").
 item_prefix(west_state_1, c, "In a small damp cave, you see ").
 item_prefix(west_state_1, d, "Hanging off a small windswept tree with scars from lightning strikes ").
