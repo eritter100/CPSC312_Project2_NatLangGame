@@ -39,7 +39,7 @@ g :- move(g).
 % basic starter to the game
 start :-
     current_state(State),
-	remove_inputs_from_location(State),
+    remove_inputs_from_location(State),
     removed_person_list(Characters),
     return_characters_from_removed_person_list(Characters),
     retract(removed_person_list(Characters)),
@@ -244,37 +244,37 @@ interaction(person(well)) :-
 map :-
     inventory(I),
     member(item(gameMap), I),
-	current_state(State),
-	state_name(State, Name),
-	write("You are currently at the "), write(Name), nl,
-	write_neighbours(State), !.
+    current_state(State),
+    state_name(State, Name),
+    write("You are currently at the "), write(Name), nl,
+    write_neighbours(State), !.
 map :-
     inventory(I),
     not(member(item(gameMap), I)),
-	write("Sorry! You don't have a map!"), nl.
+    write("Sorry! You don't have a map!"), nl.
 write_neighbours(State) :-
-	write_neighbour(north, State, "   "),
-	write_neighbour(east, State, "   "),
-	write_neighbour(south, State, "   "),
-	write_neighbour(west, State, "   ").
+    write_neighbour(north, State, "   "),
+    write_neighbour(east, State, "   "),
+    write_neighbour(south, State, "   "),
+    write_neighbour(west, State, "   ").
 write_neighbour(Direction, State, Tabs) :-
-	path(State, Direction, NewLocation, _),
-	write(Tabs), state_name(NewLocation, Name),
-	write(Tabs), write("To the "), write(Direction), write(" there is a "), write(Name), nl,
-	string_concat("   ", Tabs, NewTabs),
-	adjascent_cardinal_positions(Direction, RightDirection),
-	adjascent_cardinal_positions(LeftDirection, Direction),
-	write_neighbour(Direction, NewLocation, NewTabs),
-	write_neighbour(RightDirection, NewLocation, NewTabs),
-	write_neighbour(LeftDirection, NewLocation, NewTabs).
+    path(State, Direction, NewLocation, _),
+    write(Tabs), state_name(NewLocation, Name),
+    write(Tabs), write("To the "), write(Direction), write(" there is a "), write(Name), nl,
+    string_concat("   ", Tabs, NewTabs),
+    adjascent_cardinal_positions(Direction, RightDirection),
+    adjascent_cardinal_positions(LeftDirection, Direction),
+    write_neighbour(Direction, NewLocation, NewTabs),
+    write_neighbour(RightDirection, NewLocation, NewTabs),
+    write_neighbour(LeftDirection, NewLocation, NewTabs).
 write_neighbour(_, _, _).
 
 adjascent_cardinal_positions(north, east).
 adjascent_cardinal_positions(east, south).
 adjascent_cardinal_positions(south, west).
 adjascent_cardinal_positions(west, north).
-	
-	
+    
+    
 % assertions and prints after player death
 die :-
     life_status(Status),
@@ -549,17 +549,17 @@ add_inputs_to_location(Location) :-
     next_option(CurrentInput, NextInput),
     retract(current_input_val(CurrentInput)),
     assert(current_input_val(NextInput)),
-	add_inputs_to_location(Location).
+    add_inputs_to_location(Location).
 add_inputs_to_location(_).
 
 remove_inputs_from_location(Location) :-
     position(PersonItem, Location),
-	input(PersonItem, Input1),
-	retract(input(PersonItem, Input1)),
-	current_input_val(Input2),
+    input(PersonItem, Input1),
+    retract(input(PersonItem, Input1)),
+    current_input_val(Input2),
     retract(current_input_val(Input2)),
     assert(current_input_val(a)),
-	remove_inputs_from_location(Location).
+    remove_inputs_from_location(Location).
 remove_inputs_from_location(_).
 
 is_state(start_state).
