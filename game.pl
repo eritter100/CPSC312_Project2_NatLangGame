@@ -123,7 +123,7 @@ execute_command([describe|_]) :-
 execute_command([die|_]) :-
     die, !.
 execute_command(_) :-
-    write("There is a time and place for everything, but not now!").
+    write("There is a time and place for everything, but not now!"), nl.
 
 game_over_command(_) :-
     life_status(dead), nl,
