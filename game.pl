@@ -676,18 +676,26 @@ path(start_state, north, north_state_1, unlocked).
 path(north_state_1, north, north_state_2, item(key)). % game finale state
 path(north_state_2, south, north_state_1, unlocked).
 path(north_state_1, south, start_state, unlocked).
+path(east_state_1, south, south_east_state_1, unlocked).
+path(south_east_state_1, north, east_state_1, unlocked).
+path(south_state_1, east, south_east_state_1, unlocked).
+path(south_east_state_1, west, south_state_1, unlocked).
 
 is_state(start_state).
 is_state(east_state_1).
 is_state(west_state_1).
 is_state(north_state_1).
 is_state(north_state_2).
+is_state(south_east_state_1).
+is_state(south_state_1).
 
 state_name(west_state_1, "cliffs").
 state_name(start_state, "lavender heath").
 state_name(east_state_1, "dark forest path").
 state_name(north_state_1, "black gate").
 state_name(north_state_2, "open gate").
+state_name(south_east_state_1, "ominous jungle").
+state_name(south_state_1, "stormy seaside").
 
 % describing the location from the next location over
 state_neighbour_description(west_state_1, "you see zaps of bright lights breaking from atop the cliffside.").
@@ -695,6 +703,8 @@ state_neighbour_description(start_state, "the peaceful, lavender heath.").
 state_neighbour_description(east_state_1, "a worn down gravel path, darkened by the canopy of the forest.").
 state_neighbour_description(north_state_1, "a massive limestone wall with a large black gate.").
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
+state_neighbour_description(south_east_state_1, "through the trees you hear the terrible screams of jaguars and flesh-eating parrots.").
+state_neighbour_description(south_state_1, "beyond, you see a stormy beach, littered in jagged rocks.").
 
 % describe the current location
 state_current_description(west_state_1, "You are on atop the cliffside. The land is barren and wind is fierce.").
@@ -702,6 +712,8 @@ state_current_description(start_state, "You stand in the center of a lavender he
 state_current_description(east_state_1, "You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you.").
 state_current_description(north_state_1, "You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet.").
 state_current_description(north_state_2, "You are in some sort of dragon nest. Carcasses and old scales scatter the ground.").
+state_current_description(south_east_state_1, "You are in a jungle. Parrots with sharp beaks stare down at you, and all around brightly coloured carnivorous flowers seem to smile at you.").
+state_current_description(south_state_1, "You are on a windswept beach. The waves crash on the shoreline with a deafening roar, soaking you in freezing seaspray.").
 
 % describing directions to locations
 direction_description(east, "To the east, ").
@@ -735,6 +747,16 @@ item_prefix(north_state_2, b, "Beneath a heap of leathern scales, you see ").
 item_prefix(north_state_2, c, "Behind a smoking mound, ").
 item_prefix(north_state_2, d, "Sitting in a clutch of dragon eggs, there is ").
 item_prefix(north_state_2, e, "Beside you, ").
+item_prefix(south_east_state_1, a, "Leaning against a tree, there is ").
+item_prefix(south_east_state_1, b, "Beyond a pirana-infested stream, you see ").
+item_prefix(south_east_state_1, c, "Lurking in the shadows, you notice ").
+item_prefix(south_east_state_1, d, "To your right, ").
+item_prefix(south_east_state_1, e, "To your left, ").
+item_prefix(south_state_1, a, "Half-buried in sand, there is ").
+item_prefix(south_state_1, b, "Sitting in the shallows, you see ").
+item_prefix(south_state_1, c, "Bobbing in the waves, you notice ").
+item_prefix(south_state_1, d, "Between some rocky spires, ").
+item_prefix(south_state_1, e, "At the high-tide line, ").
 
 long_describe_contents :-
     current_state(State),
