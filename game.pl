@@ -235,15 +235,17 @@ write_state(start_state) :-
     retract(tutorial_needed(Status)),
     assert(tutorial_needed(no)),
     describe_neighbours, nl,
-    write_state_contents(start_state), nl,
-    exits(start_state), nl.
+    % write_state_contents(start_state), nl,
+    % exits(start_state), 
+    nl.
 
 write_state(State) :-
     describe_current_location, nl,
     describe_neighbours, nl,
     long_describe_contents, nl,
-    write_state_contents(State), nl,
-    exits(State), nl.
+    % write_state_contents(State), nl,
+    % exits(State), 
+    nl.
 
 
 move(Move) :-
