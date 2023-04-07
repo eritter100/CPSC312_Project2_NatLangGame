@@ -636,7 +636,7 @@ item_prefix(north_state_2, c, "Behind a smoking mound, ").
 item_prefix(north_state_2, d, "Sitting in a clutch of dragon eggs, there is ").
 item_prefix(north_state_2, e, "Beside you, ").
 item_prefix(south_east_state_1, a, "Leaning against a tree, there is ").
-item_prefix(south_east_state_1, b, "Beyond a pirana-infested stream, you see ").
+item_prefix(south_east_state_1, b, "Beyond a piranha-infested stream, you see ").
 item_prefix(south_east_state_1, c, "Lurking in the shadows, you notice ").
 item_prefix(south_east_state_1, d, "To your right, ").
 item_prefix(south_east_state_1, e, "To your left, ").
