@@ -148,6 +148,8 @@ prep(["to", "the"| L], L, _).
 prep(["into"| L], L, _).
 prep(["into"|  L], L, _).
 prep(["in", "to"| L], L, _).
+prep(["up"| L], L,_).
+prep(["up", "to"| L], L,_).
 prep(L, L, _).
 
 verb(["die"| L], L, Ind) :- die_verb(Ind).
@@ -165,6 +167,7 @@ verb(["take"| L], L, Ind) :- take_verb(Ind).
 verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
 verb(["stache"| L], L, Ind) :- take_verb(Ind).
 verb(["get"| L], L, Ind) :- take_verb(Ind).
+verb(["grab"| L], L, Ind) :- take_verb(Ind).
 
 verb(["look"| L], L, Ind) :- describe_verb(Ind).
 verb(["look", "around" | L], L, Ind) :- describe_verb(Ind).
@@ -175,9 +178,9 @@ verb(["inspect"| L], L, Ind) :- inspect_verb(Ind).
 verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
 
 noun(["south" | L], L, Ind) :- south_noun(Ind).
-noun(["down" | L], L, Ind) :- south_noun(Ind).
+% noun(["down" | L], L, Ind) :- south_noun(Ind).
 noun(["west" | L], L, Ind) :- west_noun(Ind).
-noun(["left" | L], L, Ind) :- west_noun(Ind).
+% noun(["left" | L], L, Ind) :- west_noun(Ind).
 
 % EX (could abstract this more)
 noun(["cliffs" | L], L, Ind) :- 
@@ -189,9 +192,9 @@ noun(["cliffside" | L], L, Ind) :-
     path(State, Ind, west_state_1, _). % check if the cliffside_state (west_state_1) has a path to current state
 
 noun(["east" | L], L, Ind) :- east_noun(Ind).
-noun(["right" | L], L, Ind) :- east_noun(Ind).
+% noun(["right" | L], L, Ind) :- east_noun(Ind).
 noun(["north" | L], L, Ind) :- north_noun(Ind).
-noun(["up" | L], L, Ind) :- north_noun(Ind).
+% noun(["up" | L], L, Ind) :- north_noun(Ind).
 
 noun(["key" | L], L, Ind) :- key_noun(Ind).
 noun(["sword" | L], L, Ind) :- sword_noun(Ind).
