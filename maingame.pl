@@ -39,6 +39,7 @@ g :- move(g).
 % basic starter to the game
 start :-
     current_state(State),
+	remove_inputs_from_location(State),
     removed_person_list(Characters),
     return_characters_from_removed_person_list(Characters),
     retract(removed_person_list(Characters)),
@@ -49,6 +50,7 @@ start :-
     assert(inventory([])), % add reset states func 
     retract(current_state(State)),
     assert(current_state(start_state)),
+    add_inputs_to_location(State),
     life_status(Status),
     retract(life_status(Status)),
     assert(life_status(alive)),
@@ -75,7 +77,7 @@ write_state(start_state) :-
 write_state(State) :-
     describe_current_location, nl,
     describe_neighbours, nl,
-    long_describe_contents, nl,
+    long_describe_contents(State), nl,
     write_state_contents(State), nl,
     exits(State), nl.
 
@@ -84,7 +86,9 @@ move(Move) :-
     current_state(PreviousState),
     path(PreviousState, Move, NewState, LockStatus),
     unlock(PreviousState, Move, NewState, LockStatus),
-    is_state(NewState), 
+    is_state(NewState),
+    remove_inputs_from_location(PreviousState),
+    add_inputs_to_location(NewState),
     retract(current_state(PreviousState)),
     assert(current_state(NewState)),
     life_status(alive),
@@ -203,6 +207,74 @@ interaction(person(wizard)) :-
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
 
+% WISHING WELL ENCOUNTER
+% friendly encounter - well upgrades the players gold to a magic sword
+interaction(person(well)) :-
+    inventory(Inventory),
+    member(item(gold), Inventory),
+    remove_from_inventory(item(gold)),
+    add_to_inventory(item(magic_sword)),
+    write("On impulse, you toss your sack of gold bullion into the well."), nl,
+    write("The well seems to glow with rainbows. Suddenly you find yourself holding a magic sword!"), nl,
+    write("As the multi-coloured light fades, you notice that the well has vanished."), nl,
+    nl.
+% friendly encounter - is you have a normal sword, the well summons a wizard
+interaction(person(well)) :-
+    inventory(Inventory),
+    member(item(sword), Inventory),
+    current_state(State),
+    assert(position(person(wizard), State)),
+    get_next_option_index(State, Option),
+    assert(input(person(wizard), Option)),
+    write("The wishing well growls ominously."), nl,
+    write("You draw your sword to attack, but suddenly the well transforms into a wizard!"), nl,
+    nl.
+% neutral encounter - the well gives you life advice and teleports you somewhere else
+interaction(person(well)) :-
+    write("You lean over the well, entranced."), nl,
+    write("\'Oh brave hero!\' The well calls out, \'You must defeat the dragon! To do that, you must have a magic sword."),
+    write(" To reach the dragon you must also have a key.\'"), nl,
+    write("Panicking, you wall into the well and... land in some strange new place"), nl,
+    current_state(State),
+    retract(current_state(State)),
+    assert(current_state(start_state)),
+    move(north),
+    nl.
+
+map :-
+    inventory(I),
+    member(item(gameMap), I),
+	current_state(State),
+	state_name(State, Name),
+	write("You are currently at the "), write(Name), nl,
+	write_neighbours(State), !.
+map :-
+    inventory(I),
+    not(member(item(gameMap), I)),
+	write("Sorry! You don't have a map!"), nl.
+write_neighbours(State) :-
+	write_neighbour(north, State, "   "),
+	write_neighbour(east, State, "   "),
+	write_neighbour(south, State, "   "),
+	write_neighbour(west, State, "   ").
+write_neighbour(Direction, State, Tabs) :-
+	path(State, Direction, NewLocation, _),
+	write(Tabs), state_name(NewLocation, Name),
+	write(Tabs), write("To the "), write(Direction), write(" there is a "), write(Name), nl,
+	string_concat("   ", Tabs, NewTabs),
+	adjascent_cardinal_positions(Direction, RightDirection),
+	adjascent_cardinal_positions(LeftDirection, Direction),
+	write_neighbour(Direction, NewLocation, NewTabs),
+	write_neighbour(RightDirection, NewLocation, NewTabs),
+	write_neighbour(LeftDirection, NewLocation, NewTabs).
+write_neighbour(_, _, _).
+
+adjascent_cardinal_positions(north, east).
+adjascent_cardinal_positions(east, south).
+adjascent_cardinal_positions(south, west).
+adjascent_cardinal_positions(west, north).
+	
+	
 % assertions and prints after player death
 die :-
     life_status(Status),
@@ -375,7 +447,8 @@ tutorial :-
     write("Welcome to the game, this is a text-based adventure game!"), nl,
     write("Current basic rules are as follows:"), nl,
     write("To move in a direction, type one of: east, west, south, north, followed by a ."), nl,
-    write("Type 'help.' for more help on commands"), nl, nl, nl, nl,
+    write("Type 'help.' for more help on commands"), nl,
+    write("Type 'map.' to see a map of the game"), nl, nl, nl, nl,
     write("You wake up in the middle of a peaceful, lavender heath surrounded by forest and cliffs. Some may even call it the central heath."), nl.
 help :-
     write("list of all commands go here").
@@ -392,32 +465,40 @@ help :-
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
+position(item(gameMap), south_east_state_1).
+position(person(well), south_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
 position(person(wizard), west_state_1).
-input(item(sword), a).
-input(item(shield), b).
-input(item(key), a).
-input(person(dragon), a).
-input(person(zombie), c).
-input(person(wizard), b).
+position(person(wizard), south_east_state_1).
+% input(item(sword), a).
+% input(item(shield), b).
+% input(item(key), a).
+% input(person(dragon), a).
+% input(person(zombie), c).
+% input(person(wizard), b).
+% input(person(well), a).
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
 item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
+item_name(item(gameMap), 'Map').
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
+person_name(person(well), 'Magic Well').
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
 description_long(item(key), "a large key someone must have forgotten.").
 description_long(item(magic_sword), "a greatsword, massive and glowing with epic glory.").
 description_long(item(gold), "a large, stained sack of gold.").
+description_long(item(gameMap), "a large, crumbling parchment map.").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
+description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
@@ -432,9 +513,11 @@ get_strength(item(shield), 2).
 get_strength(item(key), 0).
 get_strength(item(magic_sword), 6).
 get_strength(item(gold), 1).
+get_strength(item(gameMap), 0).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
 get_strength(person(wizard), 4).
+get_strength(person(well), 0).
 
 % LOCATION STUFF
 
@@ -449,18 +532,51 @@ path(start_state, north, north_state_1, unlocked).
 path(north_state_1, north, north_state_2, locked). % game finale state
 path(north_state_2, south, north_state_1, unlocked).
 path(north_state_1, south, start_state, unlocked).
+path(east_state_1, south, south_east_state_1, unlocked).
+path(south_east_state_1, north, east_state_1, unlocked).
+path(south_state_1, east, south_east_state_1, unlocked).
+path(south_east_state_1, west, south_state_1, unlocked).
+
+:- dynamic(current_input_val/1).
+:- retractall(current_input_val(_)).
+current_input_val(a).
+
+add_inputs_to_location(Location) :-
+    position(PersonItem, Location),
+    current_input_val(CurrentInput),
+    not(input(PersonItem, _)),
+    assert(input(PersonItem, CurrentInput)),
+    next_option(CurrentInput, NextInput),
+    retract(current_input_val(CurrentInput)),
+    assert(current_input_val(NextInput)),
+	add_inputs_to_location(Location).
+add_inputs_to_location(_).
+
+remove_inputs_from_location(Location) :-
+    position(PersonItem, Location),
+	input(PersonItem, Input1),
+	retract(input(PersonItem, Input1)),
+	current_input_val(Input2),
+    retract(current_input_val(Input2)),
+    assert(current_input_val(a)),
+	remove_inputs_from_location(Location).
+remove_inputs_from_location(_).
 
 is_state(start_state).
 is_state(east_state_1).
 is_state(west_state_1).
 is_state(north_state_1).
 is_state(north_state_2).
+is_state(south_east_state_1).
+is_state(south_state_1).
 
 state_name(west_state_1, "cliffs").
 state_name(start_state, "lavender heath").
 state_name(east_state_1, "dark forest path").
 state_name(north_state_1, "black gate").
 state_name(north_state_2, "open gate").
+state_name(south_east_state_1, "ominous jungle").
+state_name(south_state_1, "stormy seaside").
 
 % describing the location from the next location over
 state_neighbour_description(west_state_1, "you see zaps of bright lights breaking from atop the cliffside.").
@@ -468,6 +584,8 @@ state_neighbour_description(start_state, "the peaceful, lavender heath.").
 state_neighbour_description(east_state_1, "a worn down gravel path, darkened by the canopy of the forest.").
 state_neighbour_description(north_state_1, "a massive limestone wall with a large black gate.").
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
+state_neighbour_description(south_east_state_1, "through the trees you hear the terrible screams of jaguars and flesh-eating parrots.").
+state_neighbour_description(south_state_1, "beyond, you see a stormy beach, littered in jagged rocks.").
 
 % describe the current location
 state_current_description(west_state_1, "You are on atop the cliffside. The land is barren and wind is fierce.").
@@ -475,6 +593,8 @@ state_current_description(start_state, "You stand in the center of a lavender he
 state_current_description(east_state_1, "You are in the middle of the forest. It's damp, dark, you can barely see. Your feet sink into the mossy dirt beneath you.").
 state_current_description(north_state_1, "You are at the foot of the black gate. The limestone wall goes on for what seems like forever. The ground rumbles below your feet.").
 state_current_description(north_state_2, "You are in some sort of dragon nest. Carcasses and old scales scatter the ground.").
+state_current_description(south_east_state_1, "You are in a jungle. Parrots with sharp beaks stare down at you, and all around brightly coloured carnivorous flowers seem to smile at you.").
+state_current_description(south_state_1, "You are on a windswept beach. The waves crash on the shoreline with a deafening roar, soaking you in freezing seaspray.").
 
 % describing directions to locations
 direction_description(east, "To the east, ").
@@ -508,12 +628,22 @@ item_prefix(north_state_2, b, "Beneath a heap of leathern scales, you see ").
 item_prefix(north_state_2, c, "Behind a smoking mound, ").
 item_prefix(north_state_2, d, "Sitting in a clutch of dragon eggs, there is ").
 item_prefix(north_state_2, e, "Beside you, ").
+item_prefix(south_east_state_1, a, "Leaning against a tree, there is ").
+item_prefix(south_east_state_1, b, "Beyond a pirana-infested stream, you see ").
+item_prefix(south_east_state_1, c, "Lurking in the shadows, you notice ").
+item_prefix(south_east_state_1, d, "To your right, ").
+item_prefix(south_east_state_1, e, "To your left, ").
+item_prefix(south_state_1, a, "Half-buried in sand, there is ").
+item_prefix(south_state_1, b, "Sitting in the shallows, you see ").
+item_prefix(south_state_1, c, "Bobbing in the waves, you notice ").
+item_prefix(south_state_1, d, "Between some rocky spires, ").
+item_prefix(south_state_1, e, "At the high-tide line, ").
 
-long_describe_contents :-
-    current_state(State),
+long_describe_contents(State) :-
+%    current_state(State),
     position(I, State),
     long_describe_item([I], State), fail.
-long_describe_contents.
+long_describe_contents(_).
 
 long_describe_item([], _).
 long_describe_item([H|T], State) :-
