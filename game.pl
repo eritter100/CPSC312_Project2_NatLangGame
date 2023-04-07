@@ -6,6 +6,7 @@
 :- dynamic(position/1).
 :- dynamic(life_status/1).
 :- dynamic(tutorial_needed/1).
+:- dynamic(game_won/1).
 
 % retract current state to start_state for beginning of game
 :- retractall(current_state(_)).
@@ -106,9 +107,10 @@ make_command_list(V, N, [V|N]).
 execute_command([move|Thing]) :-
     is_direction_move(Thing),
     move(Thing), !.
-execute_command([move|Thing]) :-
-    input(Thing, I),
-    move(I), !.
+execute_command([take|Thing]) :-
+    take(Thing), !.
+execute_command([interact|Person]) :-
+    interact(Person), !.
 execute_command([bag|_]) :-
     bag, !.
 execute_command([describe|_]) :-
@@ -148,8 +150,10 @@ verb(["die"| L], L, Ind) :- die_verb(Ind).
 verb(["move"| L], L, Ind) :- move_verb(Ind).
 verb(["go"| L], L, Ind) :- move_verb(Ind).
 verb(["walk"| L], L, Ind) :- move_verb(Ind).
-verb(["interact"| L], L, Ind) :- move_verb(Ind). % interactions could be deepened!
-verb(["fight"| L], L, Ind) :- move_verb(Ind).
+
+verb(["interact"| L], L, Ind) :- interact_verb(Ind). % interactions could be deepened, just create new functions and interactions (fight and talk = diff outcomes!)
+verb(["fight"| L], L, Ind) :- interact_verb(Ind).
+verb(["talk"| L], L, Ind) :- interact_verb(Ind).
 
 verb(["take"| L], L, Ind) :- take_verb(Ind).
 verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
@@ -195,13 +199,11 @@ noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
 % or we could make more clauses (interact_verb, fight_verb, etc.)
 
 die_verb(die).
-
 move_verb(move). 
-take_verb(move). % we use move for picking up items so use move here too (for now)
-
-describe_verb(describe). % call with current state
-
-inventory_verb(bag). % what we call it in the other file
+interact_verb(interact).
+take_verb(take).
+describe_verb(describe). 
+inventory_verb(bag). 
 
 north_noun(north).
 south_noun(south).
@@ -254,25 +256,6 @@ move(Move) :-
     life_status(alive),
     describe, !.
 
-move(Move) :-
-    current_state(State),
-    position(item(I), State),
-    input(item(I), Move), 
-    retract(position((item(I)), State)),
-    retract(input(item(I), Move)),
-    life_status(alive),
-    add_to_inventory(item(I)), describe, !.
-
-move(Move) :-
-    current_state(State),
-    position(person(P), State),
-    input(person(P), Move),
-    life_status(alive),
-    interaction(person(P)),
-    add_to_removed_person_list(position(person(P), State)),
-    retract(position(person(P), State)),
-    retract(input(person(P), Move)), describe,
-    !.
 move(_) :-
     life_status(alive),
     write("Invalid move!"), nl, !.
@@ -281,6 +264,30 @@ move(_) :-
     life_status(dead),
     write("Ummm... your dead!"), nl, !.
 
+% call with person(Person)
+interact(Person) :-
+    current_state(State),
+    position(Person, State),
+    % input(person(P), Move),
+    life_status(alive),
+    interaction(Person),
+    add_to_removed_person_list(position(Person, State)),
+    retract(position(Person, State)),
+    % retract(input(person(P), Move)), 
+    describe, !.
+interact(_) :-
+    write("That's an invalid move!"), nl, !.
+% call with item(Item)
+take(Item) :-
+    current_state(State),
+    position(Item, State),
+    % input(item(I), Move), 
+    retract(position(Item, State)),
+    % retract(input(item(I), Move)),
+    life_status(alive),
+    add_to_inventory(Item), describe, !.
+take(_) :-
+    write("That's an invalid move!"), nl, !.
 % DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
 interaction(person(dragon)) :-
