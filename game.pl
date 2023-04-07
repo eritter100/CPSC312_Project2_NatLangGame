@@ -9,9 +9,9 @@
 :- dynamic(game_won/1).
 
 % retract current state to start_state for beginning of game
-:- retractall(current_state(_)).
-:- retractall(inventory(_)).
-:- retractall(removed_person_list(_)).
+% :- retractall(current_state(_)).
+% :- retractall(inventory(_)).
+% :- retractall(removed_person_list(_)).
 
 % starting inventory (list of strings), (maybe make a triple that corrends name of item to item?)
 inventory([]).
@@ -55,6 +55,9 @@ start :-
     life_status(Status),
     retract(life_status(Status)),
     assert(life_status(alive)),
+    game_won(GameStatus),
+    retract(game_won(GameStatus)),
+    assert(game_won(no)),
     describe, gameloop.
 
 % loops game for every input you give, only stopping when game_over is true (win, die, quit, reset)
@@ -111,6 +114,8 @@ execute_command([take|Thing]) :-
     take(Thing), !.
 execute_command([interact|Person]) :-
     interact(Person), !.
+% execute_command([fight|Person]) :-
+%     fight(Person), !.
 execute_command([bag|_]) :-
     bag, !.
 execute_command([describe|_]) :-
@@ -122,10 +127,10 @@ execute_command(_) :-
 
 game_over_command(_) :-
     life_status(dead), nl,
-    write("write this when player dies!!!!").
+    write("Thanks for playing!").
 game_over_command(_) :-
     game_won(yes), nl,
-    write("write this when win!!").
+    write("Thanks for playing!").
 
 is_direction_move(north).
 is_direction_move(south).
@@ -152,8 +157,9 @@ verb(["go"| L], L, Ind) :- move_verb(Ind).
 verb(["walk"| L], L, Ind) :- move_verb(Ind).
 
 verb(["interact"| L], L, Ind) :- interact_verb(Ind). % interactions could be deepened, just create new functions and interactions (fight and talk = diff outcomes!)
-verb(["fight"| L], L, Ind) :- interact_verb(Ind).
 verb(["talk"| L], L, Ind) :- interact_verb(Ind).
+verb(["approach"| L], L, Ind) :- interact_verb(Ind).
+% verb(["fight"| L], L, Ind) :- fight_verb(Ind).
 
 verb(["take"| L], L, Ind) :- take_verb(Ind).
 verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
@@ -163,6 +169,8 @@ verb(["get"| L], L, Ind) :- take_verb(Ind).
 verb(["look"| L], L, Ind) :- describe_verb(Ind).
 verb(["look", "around" | L], L, Ind) :- describe_verb(Ind).
 verb(["describe"| L], L, Ind) :- describe_verb(Ind).
+
+verb(["inspect"| L], L, Ind) :- inspect_verb(Ind).
 
 verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
 
@@ -174,13 +182,11 @@ noun(["left" | L], L, Ind) :- west_noun(Ind).
 % EX (could abstract this more)
 noun(["cliffs" | L], L, Ind) :- 
     current_state(State),
-    path(State, Move, west_state_1, _), % check if the cliffs_state (west_state_1) has a path to current state
-    Ind = Move.
+    path(State, Ind, west_state_1, _). % check if the cliffs_state (west_state_1) has a path to current state
 
 noun(["cliffside" | L], L, Ind) :- 
     current_state(State),
-    path(State, Move, west_state_1, _), % check if the cliffside_state (west_state_1) has a path to current state
-    Ind = Move.
+    path(State, Ind, west_state_1, _). % check if the cliffside_state (west_state_1) has a path to current state
 
 noun(["east" | L], L, Ind) :- east_noun(Ind).
 noun(["right" | L], L, Ind) :- east_noun(Ind).
@@ -204,6 +210,8 @@ interact_verb(interact).
 take_verb(take).
 describe_verb(describe). 
 inventory_verb(bag). 
+inspect_verb(inspect).
+% fight_verb(fight).
 
 north_noun(north).
 south_noun(south).
@@ -223,11 +231,13 @@ dragon_noun(person(dragon)).
 % describe is used to describe the current state 
 describe :-
     life_status(alive),
+    game_won(no),
     current_state(State),
-    write_state(State).
-
+    write_state(State), !.
 describe :-
-    write("You are dead! There is nothing to describe!").
+    life_status(dead), !. % write nothing if dead
+describe :-
+    game_won(yes), !. % write nothing if game is won
 % write_state writes out the environment of every state to the screen, as well as how they connect to other states
 write_state(start_state) :-
     tutorial_needed(Status), (\+ dif(yes, Status)),
@@ -264,9 +274,9 @@ move(_) :-
 
 move(_) :-
     life_status(dead),
-    write("Ummm... your dead!"), nl, !.
+    write("Ummm... your dead!"), nl.
 
-% call with person(Person)
+% call with person(Person), interact works as default interaction for talk and approach
 interact(Person) :-
     current_state(State),
     position(Person, State),
@@ -279,6 +289,7 @@ interact(Person) :-
     describe, !.
 interact(_) :-
     write("That's an invalid move!"), nl, !.
+
 % call with item(Item)
 take(Item) :-
     current_state(State),
@@ -290,6 +301,16 @@ take(Item) :-
     add_to_inventory(Item), describe, !.
 take(_) :-
     write("That's an invalid move!"), nl, !.
+
+/*
+% call with an inspectable thing (thinking something like: inspect(hole_in_tree) --> you see a bracer in the tree someone hid!, then player can say 'take bracer'...)
+inspect(Thing) :-
+    current_state(State),
+    position(Thing, State),
+    inspect_description(Thing), !.
+inspect(_) :-
+    write("That's an invalid move!"), nl, !.
+*/
 % DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
 interaction(person(dragon)) :-
@@ -568,6 +589,7 @@ help :-
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
+position(inspectable(pile_of_rocks), west_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
 position(person(wizard), west_state_1).
@@ -582,6 +604,7 @@ item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
 item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
+inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
@@ -659,7 +682,7 @@ direction_description(west, "To the west, ").
 direction_description(south, "To the south, ").
 
 % describe placement of items, thematically related to location
-item_prefix(west_state_1, a, "Beside you on a granite rock, ").
+item_prefix(west_state_1, a, "Beside you a pile of rocks, ").
 item_prefix(west_state_1, b, "At the opposite end of the cliffside ").
 item_prefix(west_state_1, c, "In a small damp cave, you see ").
 item_prefix(west_state_1, d, "Hanging off a small windswept tree with scars from lightning strikes ").
