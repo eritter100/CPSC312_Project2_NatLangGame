@@ -203,6 +203,7 @@ noun(["boots"| L], L, Ind) :- boots_noun(Ind).
 noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
+noun(["well" | L], L, Ind) :- well_noun(Ind).
 
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
@@ -230,6 +231,7 @@ boots_noun(item(boots)).
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
+well_noun(person(well)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
