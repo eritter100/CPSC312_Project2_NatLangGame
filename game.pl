@@ -122,6 +122,8 @@ execute_command([describe|_]) :-
     describe, !.
 execute_command([die|_]) :-
     die, !.
+execute_command([inspect|Inspectable]) :-
+    inspect(Inspectable), !.
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
@@ -205,6 +207,7 @@ noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
 noun(["well" | L], L, Ind) :- well_noun(Ind).
+noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
 
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
@@ -234,6 +237,7 @@ wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
 well_noun(person(well)).
+suspicious_bag_noun(inspectable(suspicious_bag)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
@@ -312,6 +316,7 @@ interact(_) :-
 take(Item) :-
     current_state(State),
     position(Item, State),
+    \+ hidden_by(Item, _),
     % input(item(I), Move), 
     retract(position(Item, State)),
     % retract(input(item(I), Move)),
@@ -320,15 +325,17 @@ take(Item) :-
 take(_) :-
     write("That's an invalid move!"), nl, !.
 
-/*
+
 % call with an inspectable thing (thinking something like: inspect(hole_in_tree) --> you see a bracer in the tree someone hid!, then player can say 'take bracer'...)
-inspect(Thing) :-
+inspect(Inspectable) :-
     current_state(State),
-    position(Thing, State),
-    inspect_description(Thing), !.
+    position(Item, State),
+    hidden_by(Item, Inspectable),
+    inspected_text(Inspectable, Text), write(Text), nl,
+    retract(hidden_by(Item, Inspectable)).
 inspect(_) :-
-    write("That's an invalid move!"), nl, !.
-*/
+    write("That's an invalid move! Blarf"), nl, !.
+
 % DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
 interaction(person(dragon)) :-
@@ -647,6 +654,7 @@ help :-
 
 :-dynamic(position/2).
 :-dynamic(input/2).
+:-dynamic(hidden_by/2).
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
@@ -674,11 +682,14 @@ item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
 item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
-inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
+inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
 person_name(person(well), 'Magic Well').
+
+hidden_by(item(boots), inspectable(suspicious_bag)).
+inspected_text(inspectable(suspicious_bag), " you unsheath the bag to reveal a pair of boots!").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -691,6 +702,7 @@ description_long(person(dragon), "a massive, red dragon. He's busy with his lunc
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
 description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
+description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag that flaps in the wind.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
@@ -814,8 +826,16 @@ long_describe_contents.
 long_describe_item([], _).
 long_describe_item([H|T], State) :-
     input(H, InputIndex),
+    \+ hidden_by(H, _),
     item_prefix(State, InputIndex, DescriptionPart1),
     description_long(H, DescriptionPart2),
+    write(DescriptionPart1), write(DescriptionPart2), nl,
+    long_describe_item(T, State).
+long_describe_item([H|T], State) :-
+    input(H, InputIndex),
+    hidden_by(H, Inspectable),
+    item_prefix(State, InputIndex, DescriptionPart1),
+    description_long(Inspectable, DescriptionPart2),
     write(DescriptionPart1), write(DescriptionPart2), nl,
     long_describe_item(T, State).
 
