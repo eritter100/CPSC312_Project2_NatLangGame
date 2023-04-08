@@ -208,6 +208,8 @@ noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
 noun(["well" | L], L, Ind) :- well_noun(Ind).
 noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
+noun(["rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
+noun(["pile", "of", "rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
 
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
@@ -238,6 +240,7 @@ zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
 well_noun(person(well)).
 suspicious_bag_noun(inspectable(suspicious_bag)).
+pile_of_rocks_noun(inspectable(pile_of_rocks)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
@@ -683,13 +686,16 @@ item_name(item(gold), 'Gold Bullion').
 item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
+inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
 person_name(person(well), 'Magic Well').
 
 hidden_by(item(boots), inspectable(suspicious_bag)).
-inspected_text(inspectable(suspicious_bag), " you unsheath the bag to reveal a pair of boots!").
+hidden_by(item(key), inspectable(pile_of_rocks)).
+inspected_text(inspectable(suspicious_bag), "You unsheath the bag to reveal a pair of boots!").
+inspected_text(inspectable(pile_of_rocks), "You walk closer to see that the glimmer of gold is actually a key!").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -703,6 +709,7 @@ description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
 description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
 description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag that flaps in the wind.").
+description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little glimmer of gold.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
