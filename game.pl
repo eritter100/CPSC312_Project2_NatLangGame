@@ -210,6 +210,9 @@ noun(["well" | L], L, Ind) :- well_noun(Ind).
 noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
 noun(["rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
 noun(["pile", "of", "rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
+noun(["hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
+noun(["tree", "hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
+noun(["hole", "in", "tree"| L], L, Ind) :- hole_in_tree_noun(Ind).
 
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
@@ -241,6 +244,7 @@ dragon_noun(person(dragon)).
 well_noun(person(well)).
 suspicious_bag_noun(inspectable(suspicious_bag)).
 pile_of_rocks_noun(inspectable(pile_of_rocks)).
+hole_in_tree_noun(inspectable(hole_in_tree)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
@@ -335,9 +339,14 @@ inspect(Inspectable) :-
     position(Item, State),
     hidden_by(Item, Inspectable),
     inspected_text(Inspectable, Text), write(Text), nl,
-    retract(hidden_by(Item, Inspectable)).
+    retract(hidden_by(Item, Inspectable)), !.
+% To inspect inspectables that dont hide items
+inspect(Inspectable) :-
+    current_state(State),
+    position(Inspectable, State),
+    inspected_text(Inspectable, Text), write(Text), nl, !.
 inspect(_) :-
-    write("That's an invalid move! Blarf"), nl, !.
+    write("That's an invalid move!"), nl, !.
 
 % DRAGON ENCOUNTER
 % 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
@@ -661,9 +670,9 @@ help :-
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
-% position(inspectable(pile_of_rocks), west_state_1).
 position(item(gameMap), south_east_state_1).
 position(item(boots), north_state_1).
+position(inspectable(hole_in_tree), south_east_state_1).
 position(person(well), south_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
@@ -674,6 +683,7 @@ input(item(shield), b).
 input(item(key), a).
 input(item(gameMap), a).
 input(item(boots), a).
+input(inspectable(hole_in_tree), d).
 input(person(dragon), a).
 input(person(zombie), c).
 input(person(wizard), b).
@@ -687,6 +697,7 @@ item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
+inspectable_name(inspectable(hole_in_tree), "Hole in Tree").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
@@ -696,6 +707,7 @@ hidden_by(item(boots), inspectable(suspicious_bag)).
 hidden_by(item(key), inspectable(pile_of_rocks)).
 inspected_text(inspectable(suspicious_bag), "You unsheath the bag to reveal a pair of boots!").
 inspected_text(inspectable(pile_of_rocks), "You walk closer to see that the glimmer of gold is actually a key!").
+inspected_text(inspectable(hole_in_tree), "You look in the hole to see nothing but cobwebs and dust. You feel disappointed.").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -710,6 +722,7 @@ description_long(person(wizard), "a wizard is practicing his spells, shooting vi
 description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
 description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag that flaps in the wind.").
 description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little glimmer of gold.").
+description_long(inspectable(hole_in_tree), "a large hole in the center of an old jungle tree.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
