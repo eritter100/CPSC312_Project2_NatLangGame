@@ -63,7 +63,7 @@ start :-
 % loops game for every input you give, only stopping when game_over is true (win, die, quit, reset)
 gameloop :-
     repeat,
-    say(InputCommand),
+    say(InputCommand, "What do you do? "),
     parsecommand(InputCommand,_,OutputCommand),
     execute_command(OutputCommand), 
     game_over_command(OutputCommand), !.
@@ -75,8 +75,8 @@ gameloop :-
 % NATURAL LANGUAGE PROCESSOR
 
 % prompts user to input, and tokenizes input into list
-say(Ln) :-
-    write("What do you do? "), nl, flush_output(current_output),
+say(Ln, Prompt) :-
+    write(Prompt), nl, flush_output(current_output),
     read_line_to_string(user_input, String),
     split_string(String, " -", " ,?.!-", Ln), !.
 
@@ -124,6 +124,8 @@ execute_command([die|_]) :-
     die, !.
 execute_command([inspect|Inspectable]) :-
     inspect(Inspectable), !.
+execute_command([open|Openable]) :-
+    open(Openable), !.
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
@@ -179,6 +181,8 @@ verb(["inspect"| L], L, Ind) :- inspect_verb(Ind).
 
 verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
 
+verb(["open"| L], L, Ind) :- open_verb(Ind).
+
 noun(["south" | L], L, Ind) :- south_noun(Ind).
 % noun(["down" | L], L, Ind) :- south_noun(Ind).
 noun(["west" | L], L, Ind) :- west_noun(Ind).
@@ -213,6 +217,8 @@ noun(["pile", "of", "rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
 noun(["hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
 noun(["tree", "hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
 noun(["hole", "in", "tree"| L], L, Ind) :- hole_in_tree_noun(Ind).
+noun(["driftwood"| L], L, Ind) :- driftwood_noun(Ind).
+noun(["chest"| L], L, Ind) :- chest_noun(Ind).
 
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
@@ -226,6 +232,7 @@ describe_verb(describe).
 inventory_verb(bag). 
 inspect_verb(inspect).
 % fight_verb(fight).
+open_verb(open).
 
 north_noun(north).
 south_noun(south).
@@ -245,6 +252,8 @@ well_noun(person(well)).
 suspicious_bag_noun(inspectable(suspicious_bag)).
 pile_of_rocks_noun(inspectable(pile_of_rocks)).
 hole_in_tree_noun(inspectable(hole_in_tree)).
+driftwood_noun(inspectable(driftwood)).
+chest_noun(openable(chest)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
 
@@ -471,6 +480,37 @@ interaction(person(well)) :-
     move(north),
     nl.
 
+open(Openable) :-
+    current_state(State),
+    been_opened(Openable, no),
+    position(Openable, State),
+    say(InputPassword, "What is the password? "),
+    get_open_items(InputPassword, Openable, State), !.
+open(Openable) :-
+    current_state(State),
+    position(Openable, State),
+    been_opened(Openable, yes),
+    write("You've already opened this!"), nl, !.
+open(_) :-
+    write("That's an invalid move!"), nl, !.
+
+get_open_items(InputPassword, Openable, State) :-
+    password(Openable, Password),
+    same_password(InputPassword, Password),
+    position(Item, Openable),
+    opened_text(Openable, Text), write(Text), nl,
+    retract(position(Item, Openable)),
+    assert(position(Item, State)),
+    take(Item),
+    retract(been_opened(Openable, no)),
+    assert(been_opened(Openable, yes)), !.
+get_open_items(_,_,_) :-
+    write("That didn't work"), nl, !.
+
+same_password([H|[]], Str) :-
+    \+ dif(H, Str), !.
+
+
 % assertions and prints after player death
 die :-
     life_status(Status),
@@ -667,12 +707,16 @@ help :-
 :-dynamic(position/2).
 :-dynamic(input/2).
 :-dynamic(hidden_by/2).
+:-dynamic(been_opened/2).
 position(item(sword), east_state_1).
 position(item(shield), east_state_1).
 position(item(key), west_state_1).
 position(item(gameMap), south_east_state_1).
 position(item(boots), north_state_1).
+position(item(armour), openable(chest)).
+position(openable(chest), south_east_state_1).
 position(inspectable(hole_in_tree), south_east_state_1).
+position(inspectable(driftwood), south_state_1).
 position(person(well), south_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
@@ -683,10 +727,12 @@ input(item(shield), b).
 input(item(key), a).
 input(item(gameMap), a).
 input(item(boots), a).
+input(openable(chest), b).
 input(inspectable(hole_in_tree), d).
+input(inspectable(driftwood), d).
 input(person(dragon), a).
 input(person(zombie), c).
-input(person(wizard), b).
+input(person(wizard), c).
 input(person(well), a).
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
@@ -695,19 +741,29 @@ item_name(item(magic_sword), 'Magic Sword').
 item_name(item(gold), 'Gold Bullion').
 item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
+item_name(item(armour), 'Ancient Armour').
+item_name(openable(chest), 'Ancient Chest').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 inspectable_name(inspectable(hole_in_tree), "Hole in Tree").
+inspectable_name(inspectable(driftwood), "Driftwood").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "zombie").
 person_name(person(wizard), "wizard").
 person_name(person(well), 'Magic Well').
+
+password(openable(chest), "SESAME").
+been_opened(openable(chest), no).
 
 hidden_by(item(boots), inspectable(suspicious_bag)).
 hidden_by(item(key), inspectable(pile_of_rocks)).
 inspected_text(inspectable(suspicious_bag), "You unsheath the bag to reveal a pair of boots!").
 inspected_text(inspectable(pile_of_rocks), "You walk closer to see that the glimmer of gold is actually a key!").
 inspected_text(inspectable(hole_in_tree), "You look in the hole to see nothing but cobwebs and dust. You feel disappointed.").
+inspected_text(inspectable(driftwood), "On closer look you see the word 'SESAME' etched all over it.").
+inspected_text(openable(chest), "You see there is no key hole and you can't open it. Maybe its voice activated?").
+
+opened_text(openable(chest), "You opened the chest! Inside you found a full set of Ancient Armour!").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -723,6 +779,8 @@ description_long(person(well), "a magic well that seems to be whispering your de
 description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag that flaps in the wind.").
 description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little glimmer of gold.").
 description_long(inspectable(hole_in_tree), "a large hole in the center of an old jungle tree.").
+description_long(inspectable(driftwood), "a long piece of driftwood covered in etchings.").
+description_long(openable(chest), "a large ancient chest wrapped in roots and vines.").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
