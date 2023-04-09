@@ -68,12 +68,7 @@ gameloop :-
     execute_command(OutputCommand), 
     game_over_command(OutputCommand), !.
 
-
-
-
-
 % NATURAL LANGUAGE PROCESSOR
-
 % prompts user to input, and tokenizes input into list
 say(Ln, Prompt) :-
     write(Prompt), nl, flush_output(current_output),
@@ -664,13 +659,15 @@ unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
 unlock(PathState, Move, State, UnlockItem) :-
     inventory(CurrentInventory),
     member(UnlockItem, CurrentInventory),
-    item_name(UnlockItem, Name),
-    write("Used: "), write(Name), write(". You now proceed!"), nl,
-    list_remove(UnlockItem, CurrentInventory, NewInventory),
-    retract(inventory(CurrentInventory)),
-    assert(inventory(NewInventory)),
+    unlock_item_text(UnlockItem, Text, RemoveAfterUse),
+    write(Text), nl,
+    remove_lock_item(UnlockItem, RemoveAfterUse),
     retract(path(PathState, Move, State, UnlockItem)),
     assert(path(PathState, Move, State, unlocked)).
+
+remove_lock_item(Item, yes) :-
+    remove_from_inventory(Item).
+remove_lock_item(_, no).
 
 % removes only first instance of element
 list_remove(_, [], []).
@@ -926,6 +923,9 @@ sale_text(person(salesman), sold, "The salesman sings and dances and runs out th
 sale_text(person(salesman), unsold, "The salesman says you're missing out. Are you?").
 sale_text(person(salesman), confused, "The salesman is confused. Maybe do something simpler.").
 
+unlock_item_text(item(key), "You open the black gate and proceed!", yes).
+unlock_item_text(item(boots), "You're able to traverse up the steep cliffs!", no).
+
 hidden_by(item(boots), inspectable(suspicious_bag)).
 hidden_by(item(key), inspectable(pile_of_rocks)).
 hidden_by(item(pearl), inspectable(clam)).
@@ -978,7 +978,7 @@ get_strength(item(_), 0).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
 get_strength(person(wizard), 4).
-get_strength(person(dragon), 9).
+get_strength(person(dragon), 11).
 
 % LOCATION STUFF
 
