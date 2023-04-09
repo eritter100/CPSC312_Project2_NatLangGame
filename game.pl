@@ -536,14 +536,17 @@ interaction(person(wizard), good, yes) :-
 interaction(person(well), good, no) :-
     inventory(Inventory),
     member(item(gold), Inventory),
-    remove_from_inventory(item(gold)),
-    add_to_inventory(item(magic_sword)),
-    write("On impulse, you toss your sack of gold bullion into the well."), nl,
-    write("The well seems to glow with rainbows. Suddenly you find yourself holding a magic sword!"), nl,
-    write("As the multi-coloured light fades, you notice that the well has vanished."), nl,
-    nl.
+    % remove_from_inventory(item(gold)),
+    % add_to_inventory(item(magic_sword)),
+    % write("On impulse, you toss your sack of gold bullion into the well."), nl,
+    % write("The well seems to glow with rainbows. Suddenly you find yourself holding a magic sword!"), nl,
+    % write("As the multi-coloured light fades, you notice that the well has vanished."), nl,
+    % nl.
+    say([H|_], "The well calls out for your gold! Do you toss your Gold Bullion in? " ),
+    sale(H, item(magic_sword), person(well), item(gold), _), nl, !.
+
 % friendly encounter - is you have a normal sword, the well summons a wizard
-interaction(person(well), good, no) :-
+interaction(person(well), good, yes) :-
     inventory(Inventory),
     member(item(sword), Inventory),
     current_state(State),
@@ -870,6 +873,7 @@ position(item(boots), north_state_1).
 position(item(armour), openable(chest)).
 position(item(pendant), person(salesman)).
 position(item(pearl), south_state_1).
+position(item(magic_sword), person(well)).
 position(openable(chest), south_east_state_1).
 position(inspectable(hole_in_tree), south_east_state_1).
 position(inspectable(driftwood), south_state_1).
@@ -922,6 +926,9 @@ opened_text(openable(chest), "You opened the chest! Inside you found a full set 
 sale_text(person(salesman), sold, "The salesman sings and dances and runs out the backdoor in glee. You hope you weren't just scammed.").
 sale_text(person(salesman), unsold, "The salesman says you're missing out. Are you?").
 sale_text(person(salesman), confused, "The salesman is confused. Maybe do something simpler.").
+sale_text(person(well), sold, "The well seems to glow with rainbows. Suddenly you find yourself holding a magic sword!").
+sale_text(person(well), unsold, "The well lets out a sad echo.").
+sale_text(person(well), confused, "The well lets out a confused echo.").
 
 unlock_item_text(item(key), "You open the black gate and proceed!", yes).
 unlock_item_text(item(boots), "You're able to traverse up the steep cliffs!", no).
