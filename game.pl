@@ -227,6 +227,8 @@ noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
 noun(["well" | L], L, Ind) :- well_noun(Ind).
+noun(["clam"| L], L, Ind) :- clam_noun(Ind).
+noun(["pearl"| L], L, Ind) :- pearl_noun(Ind).
 noun(["inventory"| L], L, Ind) :- inventory_noun(Ind).
 noun(["strength"| L], L, Ind) :- strength_noun(Ind).
 noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
@@ -266,12 +268,14 @@ sword_noun(item(sword)).
 shield_noun(item(shield)).
 map_noun(item(gameMap)).
 boots_noun(item(boots)).
+pearl_noun(item(pearl)).
 strength_noun(strength).
 
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
 well_noun(person(well)).
+clam_noun(inspectable(clam)).
 suspicious_bag_noun(inspectable(suspicious_bag)).
 pile_of_rocks_noun(inspectable(pile_of_rocks)).
 hole_in_tree_noun(inspectable(hole_in_tree)).
@@ -389,18 +393,25 @@ interact(Person, TypeOfInteraction) :-
     position(Person, State),
     % input(person(P), Move),
     life_status(alive),
-    interaction(Person, TypeOfInteraction),
-    add_to_removed_person_list(position(Person, State)),
-    retract(position(Person, State)),
+    interaction(Person, TypeOfInteraction, RemoveStatus),
+    remove_person(position(Person, State), RemoveStatus),
+    % add_to_removed_person_list(position(Person, State)),
+    % retract(position(Person, State)),
     % retract(input(person(P), Move)), 
     describe, !.
 interact(_) :-
     write("That's an invalid move!"), nl, !.
 
+
+remove_person(PersonPosition, yes) :-
+    add_to_removed_person_list(PersonPosition),
+    retract(PersonPosition).
+
+remove_person(_, no).
 % DRAGON ENCOUNTER
 % 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss completely
 % type of interaction does not matter, he is a dragon, there is no reasoning or talking, just fight!
-interaction(person(dragon), _) :-
+interaction(person(dragon), _, yes) :-
     inventory(CurrentInventory),
     member(item(magic_sword), CurrentInventory),
     member(item(shield), CurrentInventory),
@@ -414,7 +425,7 @@ interaction(person(dragon), _) :-
     assert(game_won(yes)),
     restart_instructions.
 
-interaction(person(dragon), _) :-
+interaction(person(dragon), _, no) :-
     inventory(CurrentInventory),
     member(item(magic_sword), CurrentInventory),
     member(item(shield), CurrentInventory),
@@ -425,7 +436,7 @@ interaction(person(dragon), _) :-
     write("But alas, you are not strong enough! Next time get some more items!"), nl,
     die.
 
-interaction(person(dragon), _) :-
+interaction(person(dragon), _, no) :-
     inventory(CurrentInventory),
     member(item(shield), CurrentInventory),
     \+ member(item(magic_sword), CurrentInventory),
@@ -434,7 +445,7 @@ interaction(person(dragon), _) :-
     write("But with no weapon, you cannot damage the dragon and grow too tired to fight!"), nl,
     die.
 
-interaction(person(dragon), _) :-
+interaction(person(dragon), _, no) :-
     inventory(CurrentInventory),
     member(item(shield), CurrentInventory),
     member(item(sword), CurrentInventory),
@@ -442,7 +453,7 @@ interaction(person(dragon), _) :-
     write("But your simple sword can't pierce his tough skin! The dragon won't take any damage!"), nl,
     die.
 
-interaction(person(dragon), _) :-
+interaction(person(dragon), _, no) :-
     write("The dragon burns you with his fiery breath!"), nl,
     die.
 
@@ -450,23 +461,23 @@ interaction(person(dragon), _) :-
 % good interaction - talk to him, he sells you item and runs off happy with a salesman
 % bad interaction - you try to kill him, but in doing so you either die or lose your sword.
 
-interaction(person(salesman), good) :-
+interaction(person(salesman), good, SaleStatus) :-
     inventory(CurrentInventory),
-    member(item(gold), CurrentInventory),
-    say([H|_], "The salesman is selling a 'so-called' magical pendant for 1 gold bullion, do you want it? " ),
-    sale(H, item(pendant), person(salesman)), !.
+    member(item(pearl), CurrentInventory),
+    say([H|_], "The salesman is selling a 'so-called' magical pendant for 1 pearl, do you want it? " ),
+    sale(H, item(pendant), person(salesman), item(pearl), SaleStatus), nl, !.
 
-interaction(person(salesman), good) :-
-    write("The salesman wants to sell you something, but you have no gold! He leaves in anger because no one around here is a customer!"), nl.
+interaction(person(salesman), good, no) :-
+    write("The salesman wants to sell you something, but you have nothing that he wants! He said he likes ocean goods however..."), nl.
 
-interaction(person(salesman), bad) :-
+interaction(person(salesman), bad, yes) :-
     write("You killed the salesman! [You monster!]"), nl,
     write("Instead of getting his wares, his body disinigrates into dust. You wonder what you missed out on"), nl.
 
 % ZOMBIE ENCOUNTER
 % victory - if player is strong enough to defeat zombie (based on contents of inventory),
 % then an item in inventory is sacrificed to defeat zombie
-interaction(person(zombie), _) :-
+interaction(person(zombie), _, yes) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength > MonsterStrength,
@@ -478,7 +489,7 @@ interaction(person(zombie), _) :-
     write("You won!"), nl,
     nl.
 % defeat - if player is NOT strong enough to defeat zombie (based on contents of inventory)
-interaction(person(zombie), _) :-
+interaction(person(zombie), _, no) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
@@ -487,7 +498,7 @@ interaction(person(zombie), _) :-
 
 % WIZARD ENCOUNTER
 % friendly encounter - wizard upgrades the players sword to a magic sword
-interaction(person(wizard), good) :-
+interaction(person(wizard), good, yes) :-
     inventory(Inventory),
     member(item(sword), Inventory),
     remove_from_inventory(item(sword)),
@@ -496,7 +507,7 @@ interaction(person(wizard), good) :-
     write("How strange: the wizard vanished!"), nl,
     nl.
 % unfriendly encounter - wizard downgrades the players magic sword to a sword
-interaction(person(wizard), bad) :-
+interaction(person(wizard), bad, yes) :-
     inventory(Inventory),
     member(item(magic_sword), Inventory),
     remove_from_inventory(item(magic_sword)),
@@ -505,20 +516,20 @@ interaction(person(wizard), bad) :-
     write("How strange: the wizard vanished!"), nl,
     nl.
 % unfriendly encounter - wizard attacks if the player doesnt have any sword
-interaction(person(wizard), bad) :-
+interaction(person(wizard), bad, yes) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength > MonsterStrength,
     add_to_inventory(item(gold)),
     write("You tried to attack the wizard but he was nimble and got away. In his escape he dropped some gold!"), nl,
     nl.
-interaction(person(wizard), bad) :-
+interaction(person(wizard), bad, no) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
-interaction(person(wizard), good) :-
+interaction(person(wizard), good, yes) :-
     inventory(Inventory),
     \+ member(item(sword), Inventory),
     add_to_inventory(item(gold)),
@@ -527,7 +538,7 @@ interaction(person(wizard), good) :-
 
 % WISHING WELL ENCOUNTER
 % friendly encounter - well upgrades the players gold to a magic sword
-interaction(person(well), _) :-
+interaction(person(well), good, no) :-
     inventory(Inventory),
     member(item(gold), Inventory),
     remove_from_inventory(item(gold)),
@@ -537,7 +548,7 @@ interaction(person(well), _) :-
     write("As the multi-coloured light fades, you notice that the well has vanished."), nl,
     nl.
 % friendly encounter - is you have a normal sword, the well summons a wizard
-interaction(person(well), _) :-
+interaction(person(well), good, no) :-
     inventory(Inventory),
     member(item(sword), Inventory),
     current_state(State),
@@ -548,7 +559,7 @@ interaction(person(well), _) :-
     write("You draw your sword to attack, but suddenly the well transforms into a wizard!"), nl,
     nl.
 % neutral encounter - the well gives you life advice and teleports you somewhere else
-interaction(person(well), _) :-
+interaction(person(well), good, no) :-
     write("You lean over the well, entranced."), nl,
     write("\'Oh brave hero!\' The well calls out, \'You must defeat the dragon! To do that, you must have a magic sword."),
     write(" To reach the dragon you must also have a key.\'"), nl,
@@ -622,19 +633,19 @@ get_open_items(_,_,_) :-
 same_password([H|[]], Str) :-
     \+ dif(H, Str), !.
 
-sale("yes", Item, Person) :-
+sale("yes", Item, Person, TradeItem, yes) :-
     item_name(Item, Name),
     position(Item, Person),
     write("You bought "), write(Name), nl,
-    remove_from_inventory(item(gold)),
+    remove_from_inventory(TradeItem),
     add_to_inventory(Item),
     retract(position(Item, Person)),
     sale_text(Person, sold, Text), write(Text), !.
 
-sale("no", _, Person) :-
+sale("no", _, Person, _, no) :-
     sale_text(Person, unsold, Text), write(Text), nl, !.
 
-sale(_,_,Person) :-
+sale(_,_,Person, _, no) :-
     sale_text(Person, confused, Text), write(Text), nl.
 
 % assertions and prints after player death
@@ -861,6 +872,7 @@ position(item(gameMap), south_east_state_1).
 position(item(boots), north_state_1).
 position(item(armour), openable(chest)).
 position(item(pendant), person(salesman)).
+position(item(pearl), south_state_1).
 position(openable(chest), south_east_state_1).
 position(inspectable(hole_in_tree), south_east_state_1).
 position(inspectable(driftwood), south_state_1).
@@ -878,6 +890,7 @@ input(item(boots), a).
 input(openable(chest), b).
 input(inspectable(hole_in_tree), d).
 input(inspectable(driftwood), d).
+input(item(pearl), b).
 input(person(dragon), a).
 input(person(zombie), c).
 input(person(wizard), c).
@@ -893,10 +906,12 @@ item_name(item(boots), 'Hiking Boots').
 item_name(item(armour), 'Ancient Armour').
 item_name(openable(chest), 'Ancient Chest').
 item_name(item(pendant), 'Magical Pendant').
+item_name(item(pearl), 'Pearl').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 inspectable_name(inspectable(hole_in_tree), "Hole in Tree").
 inspectable_name(inspectable(driftwood), "Driftwood").
+inspectable_name(inspectable(clam), "Clam").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "Zombie").
 person_name(person(wizard), "Wizard").
@@ -908,16 +923,18 @@ been_opened(openable(chest), no).
 opened_text(openable(chest), "You opened the chest! Inside you found a full set of Ancient Armour!").
 
 sale_text(person(salesman), sold, "The salesman sings and dances and runs out the backdoor in glee. You hope you weren't just scammed.").
-sale_text(person(salesman), unsold, "The salesman cries that his wears are no good and runs out the backdoor. You didn't have to be so mean.").
-sale_text(person(salesman), confused, "The salesman is confused, and after getting a better look at your dishevelled look he runs out the backdoor. You need to clean up.").
+sale_text(person(salesman), unsold, "The salesman says you're missing out. Are you?").
+sale_text(person(salesman), confused, "The salesman is confused. Maybe do something simpler.").
 
 hidden_by(item(boots), inspectable(suspicious_bag)).
 hidden_by(item(key), inspectable(pile_of_rocks)).
+hidden_by(item(pearl), inspectable(clam)).
 inspected_text(inspectable(suspicious_bag), "You unsheath the bag to reveal a pair of boots!").
 inspected_text(inspectable(pile_of_rocks), "You walk closer to see that the glimmer of gold is actually a key!").
 inspected_text(inspectable(hole_in_tree), "You look in the hole to see nothing but cobwebs and dust. You feel disappointed.").
 inspected_text(inspectable(driftwood), "On closer look you see the word 'sesame' etched all over it.").
 inspected_text(openable(chest), "You see there is no key hole and you can't open it. Maybe its voice activated?").
+inspected_text(inspectable(clam), "You open up the clam to find a pearl!").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -927,6 +944,7 @@ description_long(item(gold), "a large, stained sack of gold.").
 description_long(item(gameMap), "a large, crumbling parchment map.").
 description_long(item(boots), " a heavy pair of leather boots, perfect for scaling cliffs!").
 description_long(item(pendant), " a heavy, ruby pendant that's warm to the touch.").
+description_long(item(pearl), " a lovely, platinum pearl. This has gotta be worth something to somebody!").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
@@ -936,6 +954,7 @@ description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag th
 description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little glimmer of gold.").
 description_long(inspectable(hole_in_tree), "a large hole in the center of an old jungle tree.").
 description_long(inspectable(driftwood), "a long piece of driftwood covered in etchings.").
+description_long(inspectable(clam), "a huge, grey clam.").
 description_long(openable(chest), "a large ancient chest wrapped in roots and vines.").
 
 get_player_strength(PlayerStrength) :-
@@ -1027,7 +1046,7 @@ direction_description(west, "To the west, ").
 direction_description(south, "To the south, ").
 
 % describe placement of items, thematically related to location
-item_prefix(west_state_1, a, "Beside you a pile of rocks, and ").
+item_prefix(west_state_1, a, "Beside you ").
 item_prefix(west_state_1, b, "At the opposite end of the cliffside ").
 item_prefix(west_state_1, c, "In a small damp cave, you see ").
 item_prefix(west_state_1, d, "Hanging off a small windswept tree with scars from lightning strikes ").
