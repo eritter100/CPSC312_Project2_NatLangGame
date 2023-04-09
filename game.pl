@@ -167,6 +167,9 @@ verb(["interact"| L], L, Ind) :- interact_verb(Ind). % interactions could be dee
 verb(["talk"| L], L, Ind) :- interact_verb(Ind).
 verb(["approach"| L], L, Ind) :- interact_verb(Ind).
 verb(["fight"| L], L, Ind) :- fight_verb(Ind).
+verb(["kill"| L], L, Ind) :- fight_verb(Ind).
+verb(["threaten"| L], L, Ind) :- fight_verb(Ind).
+verb(["hit"| L], L, Ind) :- fight_verb(Ind).
 verb(["stab"| L], L, Ind) :- 
     fight_verb(Ind), 
     inventory(CurrentInventory),
@@ -331,7 +334,8 @@ move(Move) :-
     path(PreviousState, Move, _, LockStatus),
     dif(LockStatus, unlocked),
     \+ unlock(PreviousState, Move, _, LockStatus), % path is NOT unlocked, and we CANNOT unlock it
-    write("You cannot proceed! Maybe there is an item around that will help you?"), nl, % in the future, add specific text (for gate and cliffs)
+    getLockWarning(LockStatus, Text),
+    write(Text), nl, % in the future, add specific text (for gate and cliffs)
     life_status(alive),
     describe, !.
 
@@ -952,6 +956,9 @@ sale_text(person(well), confused, "The well lets out a confused echo.").
 
 unlock_item_text(item(key), "You open the black gate and proceed!", yes).
 unlock_item_text(item(boots), "You're able to traverse up the steep cliffs!", no).
+
+getLockWarning(item(key), "The gate is locked and requires a big key!").
+getLockWarning(item(boots), "The cliffside is too steep and requires climbing boots!").
 
 hidden_by(item(boots), inspectable(suspicious_bag)).
 hidden_by(item(key), inspectable(pile_of_rocks)).
