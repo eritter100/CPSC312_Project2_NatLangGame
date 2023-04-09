@@ -689,6 +689,12 @@ reset_state_items([H|T]) :-
     \+ (position(H, person(salesman))),
     assert(position(H, person(salesman))),
     reset_state_items(T).
+% reset armour to chest
+reset_state_items([H|T]) :-
+    \+ dif(H, item(armour)),
+    \+ (position(H, openable(chest))),
+    assert(position(H, openable(chest))),
+    reset_state_items(T).
 % base case
 reset_state_items([]).
 
