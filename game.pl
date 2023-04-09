@@ -487,7 +487,7 @@ interaction(person(zombie), _) :-
 
 % WIZARD ENCOUNTER
 % friendly encounter - wizard upgrades the players sword to a magic sword
-interaction(person(wizard), _) :-
+interaction(person(wizard), good) :-
     inventory(Inventory),
     member(item(sword), Inventory),
     remove_from_inventory(item(sword)),
@@ -496,7 +496,7 @@ interaction(person(wizard), _) :-
     write("How strange: the wizard vanished!"), nl,
     nl.
 % unfriendly encounter - wizard downgrades the players magic sword to a sword
-interaction(person(wizard), _) :-
+interaction(person(wizard), bad) :-
     inventory(Inventory),
     member(item(magic_sword), Inventory),
     remove_from_inventory(item(magic_sword)),
@@ -505,19 +505,25 @@ interaction(person(wizard), _) :-
     write("How strange: the wizard vanished!"), nl,
     nl.
 % unfriendly encounter - wizard attacks if the player doesnt have any sword
-interaction(person(wizard), _) :-
+interaction(person(wizard), bad) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength > MonsterStrength,
     add_to_inventory(item(gold)),
-    write("You mugged the wizard and took his gold!"), nl,
+    write("You tried to attack the wizard but he was nimble and got away. In his escape he dropped some gold!"), nl,
     nl.
-interaction(person(wizard), _) :-
+interaction(person(wizard), bad) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
+interaction(person(wizard), good) :-
+    inventory(Inventory),
+    \+ member(item(sword), Inventory),
+    add_to_inventory(item(gold)),
+    write("The wizard flicked a gold coin at you. While you were mesmerized by its shimmer, he vanished!"), nl,
+    nl.
 
 % WISHING WELL ENCOUNTER
 % friendly encounter - well upgrades the players gold to a magic sword
