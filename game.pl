@@ -683,6 +683,12 @@ reset_state_items([H|T]) :-
     assert(position(H, north_state_1)),
     assert(input(H, a)),
     reset_state_items(T).
+% reset pendant to salesman
+reset_state_items([H|T]) :-
+    \+ dif(H, item(pendant)),
+    \+ (position(H, person(salesman))),
+    assert(position(H, person(salesman))),
+    reset_state_items(T).
 % base case
 reset_state_items([]).
 
