@@ -464,7 +464,6 @@ interaction(person(wizard), _) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
-    add_to_inventory(item(gold)),
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
 
