@@ -388,11 +388,14 @@ interact(_) :-
     write("That's an invalid move!"), nl, !.
 
 % DRAGON ENCOUNTER
-% 3 interactions with the dragon, 1 win, 1 loss with shield, 1 loss completely
+% 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss completely
 interaction(person(dragon), _) :-
     inventory(CurrentInventory),
     member(item(magic_sword), CurrentInventory),
     member(item(shield), CurrentInventory),
+    get_strength(person(dragon), DragonStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength > DragonStrength,
     write("You repel the dragon's flames with your shield, and pierce the thick scales on his neck with your magic sword!"), nl,
     write("You have beat the adventure game!"), nl,
     game_won(Status),
@@ -402,7 +405,20 @@ interaction(person(dragon), _) :-
 
 interaction(person(dragon), _) :-
     inventory(CurrentInventory),
+    member(item(magic_sword), CurrentInventory),
     member(item(shield), CurrentInventory),
+    get_strength(person(dragon), DragonStrength),
+    get_player_strength(PlayerStrength),
+    PlayerStrength <= DragonStrength,
+    write("You repel the dragon's flames with your shield, and trade blows with the dragon!"), nl,
+    write("But alas, you are not strong enough! Next time get some more items!"), nl,
+    die.
+
+interaction(person(dragon), _) :-
+    inventory(CurrentInventory),
+    member(item(shield), CurrentInventory),
+    \+ member(item(magic_sword), CurrentInventory),
+    \+ member(item(sword), CurrentInventory),
     write("You repel the dragon's flames with your shield!"), nl,
     write("But with no weapon, you cannot damage the dragon and grow too tired to fight!"), nl,
     die.
@@ -922,6 +938,7 @@ get_strength(item(_), 0).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
 get_strength(person(wizard), 4).
+get_strength(person(dragon), 9).
 
 % LOCATION STUFF
 
