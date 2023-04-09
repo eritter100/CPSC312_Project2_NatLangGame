@@ -122,6 +122,8 @@ execute_command([describe|_]) :-
     describe, !.
 execute_command([die|_]) :-
     die, !.
+execute_command([map|_]) :-
+    map, !.
 execute_command([inspect|Inspectable]) :-
     inspect(Inspectable), !.
 execute_command([open|Openable]) :-
@@ -157,6 +159,8 @@ prep(["up", "to"| L], L,_).
 prep(L, L, _).
 
 verb(["die"| L], L, Ind) :- die_verb(Ind).
+
+verb(["map"| L], L, Ind) :- map_verb(Ind).
 
 verb(["move"| L], L, Ind) :- move_verb(Ind).
 verb(["go"| L], L, Ind) :- move_verb(Ind).
@@ -226,6 +230,7 @@ noun(["salesman"| L], L, Ind) :- salesman_noun(Ind).
 % or we could make more clauses (interact_verb, fight_verb, etc.)
 
 die_verb(die).
+map_verb(map).
 move_verb(move). 
 interact_verb(interact).
 take_verb(take).
@@ -496,6 +501,39 @@ interaction(person(well), _) :-
     assert(current_state(start_state)),
     move(north),
     nl.
+
+map :-
+    inventory(I),
+    member(item(gameMap), I),
+    current_state(State),
+    state_name(State, Name),
+    write("You are currently at the "), write(Name), nl,
+    write_neighbours(State), !.
+map :-
+    inventory(I),
+    not(member(item(gameMap), I)),
+    write("Sorry! You don't have a map!"), nl.
+write_neighbours(State) :-
+    write_neighbour(north, State, "   "),
+    write_neighbour(east, State, "   "),
+    write_neighbour(south, State, "   "),
+    write_neighbour(west, State, "   ").
+write_neighbour(Direction, State, Tabs) :-
+    path(State, Direction, NewLocation, _),
+    write(Tabs), state_name(NewLocation, Name),
+    write(Tabs), write("To the "), write(Direction), write(" there is a "), write(Name), nl,
+    string_concat("   ", Tabs, NewTabs),
+    adjascent_cardinal_positions(Direction, RightDirection),
+    adjascent_cardinal_positions(LeftDirection, Direction),
+    write_neighbour(Direction, NewLocation, NewTabs),
+    write_neighbour(RightDirection, NewLocation, NewTabs),
+    write_neighbour(LeftDirection, NewLocation, NewTabs).
+write_neighbour(_, _, _).
+
+adjascent_cardinal_positions(north, east).
+adjascent_cardinal_positions(east, south).
+adjascent_cardinal_positions(south, west).
+adjascent_cardinal_positions(west, north).
 
 open(Openable) :-
     current_state(State),
