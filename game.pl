@@ -537,7 +537,7 @@ sale("yes", Item, Person) :-
     sale_text(Person, sold, Text), write(Text), !.
 
 sale("no", _, Person) :-
-    sale_text(Person, unsold, Text), write(Text), nl !.
+    sale_text(Person, unsold, Text), write(Text), nl, !.
 
 sale(_,_,Person) :-
     sale_text(Person, confused, Text), write(Text), nl.
@@ -722,7 +722,8 @@ write_exits(Move, Exit, UnlockItem) :-
 tutorial :-
     write("Welcome to the game, this is a text-based adventure game!"), nl,
     write("Current basic rules are as follows:"), nl,
-    write("To move in a direction, type one of: east, west, south, north, followed by a ."), nl,
+    write("Use natural language to traverse this weird world and find out what your goal is!"), nl,
+    write("Command using lowercase letters only!"), nl,
     write("Type 'help.' for more help on commands"), nl, nl, nl, nl,
     write("You wake up in the middle of a peaceful, lavender heath surrounded by forest and cliffs. Some may even call it the central heath."), nl.
 help :-
