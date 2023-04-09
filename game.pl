@@ -294,7 +294,7 @@ write_state(start_state) :-
     % exits(start_state), 
     nl.
 
-write_state(State) :-
+write_state(_) :-
     describe_current_location, nl,
     describe_neighbours, nl,
     long_describe_contents, nl,
@@ -342,7 +342,8 @@ take(Item) :-
 take(_) :-
     write("That's an invalid move!"), nl, !.
 
-
+% check something gives the current status of it
+% checkable things are map, inventory, playerstrength
 check(item(gameMap)) :-
     map, !.
 check(bag) :-
