@@ -187,8 +187,7 @@ verb(["look", "around" | L], L, Ind) :- describe_verb(Ind).
 verb(["describe"| L], L, Ind) :- describe_verb(Ind).
 
 verb(["inspect"| L], L, Ind) :- inspect_verb(Ind).
-
-% verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
+verb(["look", "at"| L], L, Ind) :- inspect_verb(Ind).
 
 verb(["open"| L], L, Ind) :- open_verb(Ind).
 
@@ -229,10 +228,13 @@ noun(["strength"| L], L, Ind) :- strength_noun(Ind).
 noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
 noun(["rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
 noun(["pile", "of", "rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
+noun(["drawer"| L], L, Ind) :- drawer_noun(Ind).
+noun(["photo"| L], L, Ind) :- photo_noun(Ind).
 noun(["hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
 noun(["tree", "hole"| L], L, Ind) :- hole_in_tree_noun(Ind).
 noun(["hole", "in", "tree"| L], L, Ind) :- hole_in_tree_noun(Ind).
 noun(["driftwood"| L], L, Ind) :- driftwood_noun(Ind).
+noun(["sign"| L], L, Ind) :- sign_noun(Ind).
 noun(["chest"| L], L, Ind) :- chest_noun(Ind).
 noun(["salesman"| L], L, Ind) :- salesman_noun(Ind).
 
@@ -275,7 +277,10 @@ suspicious_bag_noun(inspectable(suspicious_bag)).
 pile_of_rocks_noun(inspectable(pile_of_rocks)).
 hole_in_tree_noun(inspectable(hole_in_tree)).
 driftwood_noun(inspectable(driftwood)).
+photo_noun(inspectable(photo)).
+sign_noun(inspectable(sign)).
 chest_noun(openable(chest)).
+drawer_noun(openable(drawer)).
 salesman_noun(person(salesman)).
 
 % north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
@@ -579,6 +584,7 @@ map :-
     inventory(I),
     not(member(item(gameMap), I)),
     write("Sorry! You don't have a map!"), nl.
+
 write_neighbours(State) :-
     write_neighbour(north, State, "   "),
     write_neighbour(east, State, "   "),
@@ -871,12 +877,16 @@ position(item(key), west_state_1).
 position(item(gameMap), south_east_state_1).
 position(item(boots), north_state_1).
 position(item(armour), openable(chest)).
+position(item(ring), openable(drawer)).
 position(item(pendant), person(salesman)).
 position(item(pearl), south_state_1).
 position(item(magic_sword), person(well)).
 position(openable(chest), south_east_state_1).
+position(openable(drawer), west_state_2).
 position(inspectable(hole_in_tree), south_east_state_1).
 position(inspectable(driftwood), south_state_1).
+position(inspectable(photo), west_state_2).
+position(inspectable(sign), north_state_1).
 position(person(well), south_state_1).
 position(person(dragon), north_state_2).
 position(person(zombie), east_state_1).
@@ -889,8 +899,11 @@ input(item(key), a).
 input(item(gameMap), a).
 input(item(boots), a).
 input(openable(chest), b).
+input(openable(drawer), d).
 input(inspectable(hole_in_tree), d).
 input(inspectable(driftwood), d).
+input(inspectable(photo), b).
+input(inspectable(sign), b).
 input(item(pearl), b).
 input(person(dragon), a).
 input(person(zombie), c).
@@ -906,13 +919,17 @@ item_name(item(gameMap), 'Map').
 item_name(item(boots), 'Hiking Boots').
 item_name(item(armour), 'Ancient Armour').
 item_name(openable(chest), 'Ancient Chest').
+item_name(openable(drawer), "Drawer").
 item_name(item(pendant), 'Magical Pendant').
 item_name(item(pearl), 'Pearl').
+item_name(item(ring), 'Ruby Ring').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 inspectable_name(inspectable(hole_in_tree), "Hole in Tree").
 inspectable_name(inspectable(driftwood), "Driftwood").
 inspectable_name(inspectable(clam), "Clam").
+inspectable_name(inspectable(photo), "Photo").
+insepctable_name(inspectable(sign), "Sign").
 person_name(person(dragon), "Boss Dragon").
 person_name(person(zombie), "Zombie").
 person_name(person(wizard), "Wizard").
@@ -920,8 +937,11 @@ person_name(person(well), 'Magic Well').
 person_name(person(salesman), "Travelling Salesman").
 
 password(openable(chest), "sesame").
+password(openable(drawer), "haskell").
 been_opened(openable(chest), no).
+been_opened(openable(drawer), no).
 opened_text(openable(chest), "You opened the chest! Inside you found a full set of Ancient Armour!").
+opened_text(openable(drawer), "You opened the drawer! Inside you found a ruby ring glowing with power!").
 
 sale_text(person(salesman), sold, "The salesman sings and dances and runs out the backdoor in glee. You hope you weren't just scammed.").
 sale_text(person(salesman), unsold, "The salesman says you're missing out. Are you?").
@@ -941,7 +961,10 @@ inspected_text(inspectable(pile_of_rocks), "You walk closer to see that the glim
 inspected_text(inspectable(hole_in_tree), "You look in the hole to see nothing but cobwebs and dust. You feel disappointed.").
 inspected_text(inspectable(driftwood), "On closer look you see the word 'sesame' etched all over it.").
 inspected_text(openable(chest), "You see there is no key hole and you can't open it. Maybe its voice activated?").
+inspected_text(openable(drawer), "It is locked with a wordlock. Maybe there's a clue in this room?").
 inspected_text(inspectable(clam), "You open up the clam to find a pearl!").
+inspected_text(inspectable(photo), "On closer look, its a photo of a man programming. Behind him a sign that says, 'THE BEST FUNCTIONAL LANGUAGE IS...', but you can't make out the rest").
+inspected_text(inspectable(sign), "The sign is charred with fire. All you can make out are the words, 'GREATER THAN 11' ").
 
 description_long(item(sword), "a tiny, rusted sword. You don't think about the one who dropped it").
 description_long(item(shield), "a heavy shield, cracked and bloodstained. You REALLY don't want to think about who dropped it.").
@@ -962,7 +985,10 @@ description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little gli
 description_long(inspectable(hole_in_tree), "a large hole in the center of an old jungle tree.").
 description_long(inspectable(driftwood), "a long piece of driftwood covered in etchings.").
 description_long(inspectable(clam), "a huge, grey clam.").
+description_long(inspectable(photo), "a small grainy photo in a cracked frame").
+description_long(inspectable(sign), "a little, crooked sign on a post").
 description_long(openable(chest), "a large ancient chest wrapped in roots and vines.").
+description_long(openable(drawer), "a splintered wooden drawer with all but 1 of its drawers missing").
 
 get_player_strength(PlayerStrength) :-
     inventory(Inventory),
@@ -979,6 +1005,7 @@ get_strength(item(magic_sword), 6) :- !.
 get_strength(item(gold), 1) :- !.
 get_strength(item(armour), 3) :- !.
 get_strength(item(boots), 1) :- !.
+get_strength(item(ring), 1) :- !.
 % get_strength(item(gameMap), 0).
 get_strength(item(pendant), 2) :- !.
 get_strength(item(_), 0).
