@@ -894,7 +894,8 @@ get_strength(item(key), 0).
 get_strength(item(magic_sword), 6).
 get_strength(item(gold), 1).
 get_strength(item(armour), 3).
-get_strength(item(boots), 0).
+get_strength(item(boots), 1).
+get_strength(item(gameMap), 0).
 get_strength(item(pendant), 2).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
