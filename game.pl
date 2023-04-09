@@ -202,13 +202,22 @@ noun(["west" | L], L, Ind) :- west_noun(Ind).
 % noun(["left" | L], L, Ind) :- west_noun(Ind).
 
 % EX (could abstract this more)
-noun(["cliffs" | L], L, Ind) :- 
-    current_state(State),
-    path(State, Ind, west_state_1, _). % check if the cliffs_state (west_state_1) has a path to current state
+noun(["heath"| L], L, Ind) :- get_corresponding_direction(start_state, Ind).
+noun(["lavender", "heath"| L], L, Ind) :- get_corresponding_direction(start_state, Ind).
+noun(["wall"| L], L, Ind) :- get_corresponding_direction(north_state_1, Ind).
+noun(["limestone", "wall"| L], L, Ind) :- get_corresponding_direction(north_state_1, Ind).
+noun(["cliffs" | L], L, Ind) :- get_corresponding_direction(west_state_1, Ind).
+noun(["cliffside" | L], L, Ind) :- get_corresponding_direction(west_state_1, Ind).
+noun(["post"| L], L, Ind) :- get_corresponding_direction(west_state_2, Ind).
+noun(["trading","post"| L], L, Ind) :- get_corresponding_direction(west_state_2, Ind).
+noun(["forest"| L], L, Ind) :- get_corresponding_direction(east_state_1, Ind).
+noun(["gravel","path"| L], L, Ind) :- get_corresponding_direction(east_state_1, Ind).
+noun(["jungle"| L], L, Ind) :- get_corresponding_direction(south_east_state_1, Ind).
+noun(["beach"| L], L, Ind) :- get_corresponding_direction(south_state_1, Ind).
+noun(["stormy", "beach"| L], L, Ind) :- get_corresponding_direction(south_state_1, Ind).
+noun(["gate"| L], L, Ind) :- get_corresponding_direction(north_state_2, Ind).
+noun(["black","gate"| L], L, Ind) :- get_corresponding_direction(north_state_2, Ind).
 
-noun(["cliffside" | L], L, Ind) :- 
-    current_state(State),
-    path(State, Ind, west_state_1, _). % check if the cliffside_state (west_state_1) has a path to current state
 
 noun(["east" | L], L, Ind) :- east_noun(Ind).
 % noun(["right" | L], L, Ind) :- east_noun(Ind).
@@ -241,6 +250,9 @@ noun(["sign"| L], L, Ind) :- sign_noun(Ind).
 noun(["chest"| L], L, Ind) :- chest_noun(Ind).
 noun(["salesman"| L], L, Ind) :- salesman_noun(Ind).
 
+get_corresponding_direction(DestinationState, Direction) :-
+    current_state(State),
+    path(State, Direction, DestinationState, _).
 % we could make it so that we only have 1 move verb clause (the one below)
 % and then use that to execute all types of moves (motion, interaction, fight)
 % or we could make more clauses (interact_verb, fight_verb, etc.)
@@ -1066,7 +1078,7 @@ state_neighbour_description(start_state, "the peaceful, lavender heath.").
 state_neighbour_description(east_state_1, "a worn down gravel path, darkened by the canopy of the forest.").
 state_neighbour_description(north_state_1, "a massive limestone wall with a large black gate.").
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
-state_neighbour_description(south_east_state_1, "through the trees you hear the terrible screams of jaguars and flesh-eating parrots.").
+state_neighbour_description(south_east_state_1, "a jungle where you hear the terrible screams of jaguars and flesh-eating parrots.").
 state_neighbour_description(south_state_1, "beyond, you see a stormy beach, littered in jagged rocks.").
 state_neighbour_description(west_state_2, "a tiny, wodden trading post with a sign that says open.").
 
