@@ -171,7 +171,15 @@ verb(["walk"| L], L, Ind) :- move_verb(Ind).
 verb(["interact"| L], L, Ind) :- interact_verb(Ind). % interactions could be deepened, just create new functions and interactions (fight and talk = diff outcomes!)
 verb(["talk"| L], L, Ind) :- interact_verb(Ind).
 verb(["approach"| L], L, Ind) :- interact_verb(Ind).
-% verb(["fight"| L], L, Ind) :- fight_verb(Ind).
+verb(["fight"| L], L, Ind) :- fight_verb(Ind).
+verb(["stab"| L], L, Ind) :- 
+    fight_verb(Ind), 
+    inventory(CurrentInventory),
+    member(item(sword), CurrentInventory).
+verb(["stab"| L], L, Ind) :- 
+    fight_verb(Ind), 
+    inventory(CurrentInventory),
+    member(item(magic_sword), CurrentInventory).
 
 verb(["take"| L], L, Ind) :- take_verb(Ind).
 verb(["pick", "up"| L], L, Ind) :- take_verb(Ind).
@@ -243,7 +251,7 @@ take_verb(take).
 describe_verb(describe). 
 % inventory_verb(bag). 
 inspect_verb(inspect).
-% fight_verb(fight).
+fight_verb(fight).
 open_verb(open).
 check_verb(check).
 
@@ -302,7 +310,7 @@ write_state(_) :-
     % exits(State), 
     nl.
 
-
+% Move from a starting state to a new state, granted a path exists and it is not unlocked
 move(Move) :-
     current_state(PreviousState),
     path(PreviousState, Move, NewState, LockStatus),
@@ -312,6 +320,7 @@ move(Move) :-
     assert(current_state(NewState)),
     life_status(alive),
     describe, !.
+
 % trying to move to locked place
 move(Move) :-
     current_state(PreviousState),
@@ -329,7 +338,8 @@ move(_) :-
 move(_) :-
     life_status(dead),
     write("Ummm... your dead!"), nl.
-% call with item(Item)
+
+% takes Item from current state and puts it into your inventory
 take(Item) :-
     current_state(State),
     position(Item, State),
@@ -370,7 +380,7 @@ inspect(_) :-
     write("That's an invalid move!"), nl, !.
 
 % call with person(Person), interact works as default interaction for talk and approach
-% INTERACTIONS ARE EITHER GOOD OR bad
+% INTERACTIONS ARE EITHER GOOD OR BAD
 % GOOD INTERACTIONS: talk, approach, call out.
 % BAD INTERACTIONS: fight, stab(if have sword), hurt, kill
 % type of interaction doesnt matter for dragon or zombie since they are MOBS/inherently bad
@@ -389,6 +399,7 @@ interact(_) :-
 
 % DRAGON ENCOUNTER
 % 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss completely
+% type of interaction does not matter, he is a dragon, there is no reasoning or talking, just fight!
 interaction(person(dragon), _) :-
     inventory(CurrentInventory),
     member(item(magic_sword), CurrentInventory),
@@ -409,7 +420,7 @@ interaction(person(dragon), _) :-
     member(item(shield), CurrentInventory),
     get_strength(person(dragon), DragonStrength),
     get_player_strength(PlayerStrength),
-    PlayerStrength <= DragonStrength,
+    PlayerStrength =< DragonStrength,
     write("You repel the dragon's flames with your shield, and trade blows with the dragon!"), nl,
     write("But alas, you are not strong enough! Next time get some more items!"), nl,
     die.
@@ -439,14 +450,18 @@ interaction(person(dragon), _) :-
 % good interaction - talk to him, he sells you item and runs off happy with a salesman
 % bad interaction - you try to kill him, but in doing so you either die or lose your sword.
 
-interaction(person(salesman), _) :-
+interaction(person(salesman), good) :-
     inventory(CurrentInventory),
     member(item(gold), CurrentInventory),
     say([H|_], "The salesman is selling a 'so-called' magical pendant for 1 gold bullion, do you want it? " ),
     sale(H, item(pendant), person(salesman)), !.
 
-interaction(person(salesman), _) :-
+interaction(person(salesman), good) :-
     write("The salesman wants to sell you something, but you have no gold! He leaves in anger because no one around here is a customer!"), nl.
+
+interaction(person(salesman), bad) :-
+    write("You killed the salesman! [You monster!]"), nl,
+    write("Instead of getting his wares, his body disinigrates into dust. You wonder what you missed out on"), nl.
 
 % ZOMBIE ENCOUNTER
 % victory - if player is strong enough to defeat zombie (based on contents of inventory),
