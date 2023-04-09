@@ -128,6 +128,8 @@ execute_command([inspect|Inspectable]) :-
     inspect(Inspectable), !.
 execute_command([open|Openable]) :-
     open(Openable), !.
+execute_command([check|Item]) :-
+    check(Item), !.
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
@@ -183,9 +185,11 @@ verb(["describe"| L], L, Ind) :- describe_verb(Ind).
 
 verb(["inspect"| L], L, Ind) :- inspect_verb(Ind).
 
-verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
+% verb(["inventory"| L], L, Ind) :- inventory_verb(Ind). % say inventory is a verb in our context
 
 verb(["open"| L], L, Ind) :- open_verb(Ind).
+
+verb(["check"| L], L, Ind) :- check_verb(Ind).
 
 noun(["south" | L], L, Ind) :- south_noun(Ind).
 % noun(["down" | L], L, Ind) :- south_noun(Ind).
@@ -215,6 +219,8 @@ noun(["wizard" | L], L, Ind) :- wizard_noun(Ind).
 noun(["zombie" | L], L, Ind) :- zombie_noun(Ind).
 noun(["dragon" | L], L, Ind) :- dragon_noun(Ind).
 noun(["well" | L], L, Ind) :- well_noun(Ind).
+noun(["inventory"| L], L, Ind) :- inventory_noun(Ind).
+noun(["strength"| L], L, Ind) :- strength_noun(Ind).
 noun(["bag"| L], L, Ind) :- suspicious_bag_noun(Ind).
 noun(["rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
 noun(["pile", "of", "rocks"| L], L, Ind) :- pile_of_rocks_noun(Ind).
@@ -235,21 +241,24 @@ move_verb(move).
 interact_verb(interact).
 take_verb(take).
 describe_verb(describe). 
-inventory_verb(bag). 
+% inventory_verb(bag). 
 inspect_verb(inspect).
 % fight_verb(fight).
 open_verb(open).
+check_verb(check).
 
 north_noun(north).
 south_noun(south).
 east_noun(east).
 west_noun(west).
+inventory_noun(bag).
 
 key_noun(item(key)).
 sword_noun(item(sword)).
 shield_noun(item(shield)).
 map_noun(item(gameMap)).
 boots_noun(item(boots)).
+strength_noun(strength).
 
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
@@ -331,6 +340,17 @@ take(Item) :-
     life_status(alive),
     add_to_inventory(Item), describe, !.
 take(_) :-
+    write("That's an invalid move!"), nl, !.
+
+
+check(item(gameMap)) :-
+    map, !.
+check(bag) :-
+    bag, !.
+check(strength) :-
+    get_player_strength(Number),
+    write("If your current strength was a number, it would be "), write(Number), nl, !.
+check(_) :-
     write("That's an invalid move!"), nl, !.
 
 % call with an inspectable thing (thinking something like: inspect(hole_in_tree) --> you see a bracer in the tree someone hid!, then player can say 'take bracer'...)
