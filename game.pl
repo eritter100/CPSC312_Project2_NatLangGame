@@ -4,6 +4,8 @@
 :- dynamic(inventory/1).
 :- dynamic(removed_person_list/1).
 :- dynamic(removed_item_list/1).
+:- dynamic(removed_inspectable_list/1).
+:- dynamic(removed_openable_list/1).
 :- dynamic(position/1).
 :- dynamic(life_status/1).
 :- dynamic(tutorial_needed/1).
@@ -18,6 +20,8 @@
 inventory([]).
 removed_person_list([]).
 removed_item_list([]).
+removed_inspectable_list([]).
+removed_openable_list([]).
 current_state(start_state).
 life_status(alive).
 tutorial_needed(yes).
@@ -56,6 +60,14 @@ start :-
     return_characters_from_removed_person_list(Characters),
     retract(removed_person_list(Characters)),
     assert(removed_person_list([])),
+    removed_inspectable_list(Inspectables),
+    return_inspectables_from_removed_inspectable_list(Inspectables),
+    retract(removed_inspectable_list(Inspectables)),
+    assert(removed_inspectable_list([])),
+    removed_openable_list(Openables),
+    return_openables_from_removed_openable_list(Openables),
+    retract(removed_openable_list(Openables)),
+    assert(removed_openable_list([])),
     retract(current_state(State)),
     assert(current_state(start_state)),
     life_status(Status),
@@ -408,6 +420,7 @@ inspect(Inspectable) :-
     position(Item, State),
     hidden_by(Item, Inspectable),
     inspected_text(Inspectable, Text), write(Text), nl,
+    add_to_removed_inspected_list(hidden_by(Item, Inspectable)),
     retract(hidden_by(Item, Inspectable)), !.
 % To inspect inspectables that dont hide items
 inspect(Inspectable) :-
@@ -668,15 +681,11 @@ get_open_items(InputPassword, Openable) :-
     same_password(InputPassword, Password),
     position(Item, Openable),
     opened_text(Openable, Text), write(Text), nl,
-    retract(position(Item, Openable)),
+    % retract(position(Item, Openable)),
     add_to_inventory(Item),
-    /*
-    assert(position(Item, State)),
-    assert(input(Item, e)),
-    take(Item),
-    */
-    retract(been_opened(Openable, no)),
-    assert(been_opened(Openable, yes)), !.
+    add_to_removed_openable_list(removed_openable_info(position(Item, Openable), been_opened(Openable, no))), !.
+    % retract(been_opened(Openable, no)),
+    % assert(been_opened(Openable, yes)), 
 get_open_items(_,_) :-
     write("That didn't work"), nl, !.
 
@@ -1063,6 +1072,30 @@ return_items_from_removed_item_list([removed_item_info(item(I), State, Option)|T
     assert(input(item(I), Option)),
     return_items_from_removed_item_list(T).
 return_items_from_removed_item_list([]).
+
+add_to_removed_inspected_list(hidden_by(Item, Inspectable)) :-
+    removed_inspectable_list(Old_inspectable_list),
+    list_add(hidden_by(Item, Inspectable), Old_inspectable_list, New_inspectable_list),
+    retract(removed_inspectable_list(Old_inspectable_list)),
+    assert(removed_inspectable_list(New_inspectable_list)).
+
+return_inspectables_from_removed_inspectable_list([]).
+return_inspectables_from_removed_inspectable_list([hidden_by(Item, Inspectable)| T]) :-
+    assert(hidden_by(Item, Inspectable)),
+    return_inspectables_from_removed_inspectable_list(T).
+
+add_to_removed_openable_list(removed_openable_info(position(Item, Openable), been_opened(Openable, no))) :-
+    removed_openable_list(Old_openable_list),
+    list_add(removed_openable_info(position(Item, Openable), been_opened(Openable, no)), Old_openable_list, New_openable_list),
+    retract(removed_openable_list(Old_openable_list)),
+    assert(removed_openable_list(New_openable_list)).
+
+return_openables_from_removed_openable_list([]).
+return_openables_from_removed_openable_list([removed_openable_info(position(Item, Openable), been_opened(Openable, no))| T]) :-
+    assert(position(Item, Openable)),
+    retract(been_opened(Openable, _)),
+    assert(been_opened(Openable, no)),
+    return_openables_from_removed_openable_list(T).
 
 % next option
 next_option(a,b).
