@@ -44,7 +44,7 @@ start :-
     shuffle_map,
     current_state(State),
     inventory(Inventory),
-    reset_state_items(Inventory),
+    reset_state_items(Inventory), % !!!
     retract(inventory(Inventory)),
     assert(inventory([])), % add reset states func 
     removed_person_list(Characters),
@@ -372,13 +372,13 @@ move(_) :-
     write("Ummm... your dead!"), nl.
 
 % takes Item from current state and puts it into your inventory
-take(Item) :-
+take(Item) :- % !!!
     current_state(State),
     position(Item, State),
     \+ hidden_by(Item, _),
-    input(item(I), Move), 
+    input(Item, Move), 
     retract(position(Item, State)),
-    retract(input(item(I), Move)),
+    retract(input(Item, Move)),
     life_status(alive),
     add_to_inventory(Item), describe, !.
 take(_) :-
@@ -508,7 +508,7 @@ interaction(person(salesman), good, no) :-
 
 interaction(person(salesman), bad, yes) :-
     write("You killed the salesman! [You monster!]"), nl,
-    write("Instead of getting his wares, his body disinigrates into dust. You wonder what you missed out on"), nl.
+    write("Instead of getting his wares, his body disintegrates into dust. You wonder what you missed out on"), nl.
 
 % ZOMBIE ENCOUNTER
 % victory - if player is strong enough to defeat zombie (based on contents of inventory),
@@ -648,7 +648,7 @@ open(Openable) :-
     been_opened(Openable, no),
     position(Openable, State),
     say(InputPassword, "What is the password? "),
-    get_open_items(InputPassword, Openable, State), !.
+    get_open_items(InputPassword, Openable), !.
 open(Openable) :-
     current_state(State),
     position(Openable, State),
@@ -657,17 +657,21 @@ open(Openable) :-
 open(_) :-
     write("That's an invalid move!"), nl, !.
 
-get_open_items(InputPassword, Openable, State) :-
+get_open_items(InputPassword, Openable) :-
     password(Openable, Password),
     same_password(InputPassword, Password),
     position(Item, Openable),
     opened_text(Openable, Text), write(Text), nl,
     retract(position(Item, Openable)),
-    assert(position(Item, State)),
+    add_to_inventory(Item),
+    /*
+    assert(position(Item, State)), % !!!
+    assert(input(Item, e)),
     take(Item),
+    */
     retract(been_opened(Openable, no)),
     assert(been_opened(Openable, yes)), !.
-get_open_items(_,_,_) :-
+get_open_items(_,_) :-
     write("That didn't work"), nl, !.
 
 same_password([H|[]], Str) :-
@@ -1474,7 +1478,7 @@ state_neighbour_description(north_state_1, "a massive limestone wall with a larg
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
 state_neighbour_description(south_east_state_1, "a jungle where you hear the terrible screams of jaguars and flesh-eating parrots.").
 state_neighbour_description(south_state_1, "you see a stormy beach, littered in jagged rocks.").
-state_neighbour_description(west_state_2, "a tiny, wodden trading post with a sign that says open.").
+state_neighbour_description(west_state_2, "a tiny, wooden trading post with a sign that says open.").
 
 % describe the current location
 state_current_description(west_state_1, "You are on atop the cliffside. The land is barren and wind is fierce.").
