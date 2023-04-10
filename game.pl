@@ -127,6 +127,8 @@ execute_command([check|Item]) :-
     check(Item), !.
 execute_command([help|_]) :-
     help,!.
+execute_command([rub|Person]) :-
+    rub(Person), !.
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
@@ -199,6 +201,8 @@ verb(["open"| L], L, Ind) :- open_verb(Ind).
 
 verb(["check"| L], L, Ind) :- check_verb(Ind).
 
+verb(["rub"| L], L, Ind) :- rub_verb(Ind).
+
 noun(["south" | L], L, Ind) :- south_noun(Ind).
 % noun(["down" | L], L, Ind) :- south_noun(Ind).
 noun(["west" | L], L, Ind) :- west_noun(Ind).
@@ -252,6 +256,7 @@ noun(["driftwood"| L], L, Ind) :- driftwood_noun(Ind).
 noun(["sign"| L], L, Ind) :- sign_noun(Ind).
 noun(["chest"| L], L, Ind) :- chest_noun(Ind).
 noun(["salesman"| L], L, Ind) :- salesman_noun(Ind).
+noun(["lamp"| L], L, Ind) :- genie_noun(Ind).
 
 get_corresponding_direction(DestinationState, Direction) :-
     current_state(State),
@@ -272,6 +277,7 @@ fight_verb(fight).
 open_verb(open).
 check_verb(check).
 help_verb(help).
+rub_verb(rub).
 
 north_noun(north).
 south_noun(south).
@@ -290,6 +296,7 @@ strength_noun(strength).
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
+genie_noun(person(genie)).
 well_noun(person(well)).
 clam_noun(inspectable(clam)).
 suspicious_bag_noun(inspectable(suspicious_bag)).
@@ -680,6 +687,248 @@ sale("no", _, Person, _, no) :-
 sale(_,_,Person, _, no) :-
     sale_text(Person, confused, Text), write(Text), nl.
 
+% A DCG interaction with a genie who loves prolog
+% if you share the same opinion about loving prolog (more or equal to haskell), he rewards you!
+rub(person(genie)) :-
+    write("You rub the lamp and a magical genie appears! He is no ordinary genie however!"), nl,
+    write("The genie traps you in a cloud of smoke and says: You do not leave until you answer my question!"), nl,
+    genie_interaction.
+
+genie_interaction :-
+    repeat,
+    say(Input, "The genie says: what is your opinion on haskell and prolog? And respond in a natural, DCG-way I understand!"),
+    stringlist_to_atom(Input, AtomInput),
+    phrase(genie_opinion(OpinionTree), AtomInput),
+    valid_opinion(OpinionTree),
+    get_opinion_value(OpinionTree, OpinionValue),
+    genie_reaction(OpinionValue), nl,
+    current_state(State),
+    remove_person(person(genie), State, yes), !.
+
+genie_reaction(1) :-
+    write("The genie says: Hate is too strong and evil a feeling to have! I banish you to this lamp forever!"),
+    die, !.
+genie_reaction(2) :-
+    write("The genie says: How could you dislike prolog, its the perfect language! Away from me you cretin!"), nl,
+    write("The genie snaps his fingers and teleports you away!"),
+    current_state(State),
+    retract(current_state(State)),
+    assert(current_state(start_state)), !.
+genie_reaction(3) :-
+    write("The genie says: No opinions on prolog? What a shame!"), nl,
+    write("The genie and the lamp vanish!"), !.
+genie_reaction(4) :-
+    write("The genie says: I like haskell too, but come on! It's not better than prolog!"), nl,
+    write("The genie and the lamp vanish!"), !.
+genie_reaction(5) :-
+    write("The genie says: You only a mere 'like' of prolog! You have clearly not played enough with it!"), nl,
+    write("The genie and the lamp vanish!"), !.
+genie_reaction(6) :-
+    write("The genie says: You noble being, are man of taste and culture! Take this!"), nl,
+    write("The genie and the lamp vanish!"), !.
+genie_reaction(_) :-
+    write("The genie says: Hmm... I'm confused"),
+    write("The genie and the lamp vanish!").
+
+% Checks to make sure opinion is valid
+% valid opinion does not have the same object noun multiple times
+% ex. 'I like haskell and I hate haskell', is not valid (in our context)
+% ex. 'I love haskell but I love prolog', is not valid either
+% single sentence opinions are always valid (1 object noun)
+valid_opinion(go(SentenceTree,Conjunction, OpinionTree)) :-
+    valid_conjunction_use(SentenceTree, Conjunction, OpinionTree),
+    valid_opinion_meaning(SentenceTree, OpinionTree),
+    valid_opinion(OpinionTree).
+valid_opinion(go(_)). 
+
+
+% conjunction use is always valid except in the case that but is used with the same verb in each 
+% connecting sentence
+valid_conjunction_use(SentenceTree, gcon(but), OpinionTree) :-
+    get_verb(SentenceTree, Verb1),
+    get_first_sentence(OpinionTree, SentenceTree2),
+    get_verb(SentenceTree2, Verb2),
+    dif(Verb1, Verb2),
+    get_next_opinion(OpinionTree, NextOpinion),
+    valid_conjunction_use(SentenceTree, gcon(but), NextOpinion).
+valid_conjunction_use(SentenceTree, gcon(but), OpinionTree) :-
+    get_verb(SentenceTree, Verb1),
+    single_sentence_opinion(OpinionTree, SentenceTree2),
+    get_verb(SentenceTree2, Verb2),
+    dif(Verb1, Verb2).
+valid_conjunction_use(_, gcon(morethan), _).
+valid_conjunction_use(_, gcon(lessthan), _).
+valid_conjunction_use(_, gcon(and), _).
+
+% checks to see if sentence tree and opinion tree has same object noun at all
+% also checks if conjunction but is used, and verb is same in each sentence
+valid_opinion_meaning(SentenceTree, OpinionTree) :-
+    get_noun(SentenceTree, Noun1),
+    get_first_sentence(OpinionTree, SentenceTree2),
+    get_noun(SentenceTree2, Noun2),
+    dif(Noun1, Noun2),
+    get_next_opinion(OpinionTree, OpinionTree2),
+    valid_opinion_meaning(SentenceTree, OpinionTree2).
+valid_opinion_meaning(SentenceTree, OpinionTree) :-
+    get_noun(SentenceTree, Noun1),
+    single_sentence_opinion(OpinionTree, SentenceTree2),
+    get_noun(SentenceTree2, Noun2),
+    dif(Noun1, Noun2).
+
+% Mutliple different values of opinion
+% Case 1: Tree includes word 'hate'
+% all cases after verified to not include 'hate'
+get_opinion_value(OpinionTree, OpinionValue) :-
+    includes_hate(OpinionTree),
+    OpinionValue is 1.
+% Case 2: Dislikes Prolog
+get_opinion_value(OpinionTree, OpinionValue) :-
+    dislike_prolog(OpinionTree),
+    OpinionValue is 2.
+% Case 3: No mention of prolog (1 sentence haskell opinion)
+% after this, verified that opinions include a positive view of prolog (like/love)
+get_opinion_value(OpinionTree, OpinionValue) :-
+    \+ mention_prolog(OpinionTree),
+    OpinionValue is 3.
+% Case 4: Liking/Loving Haskell more than Prolog or you love/like prolog less than haskell
+get_opinion_value(OpinionTree, OpinionValue) :-
+    enjoy_haskell_more_than_prolog(OpinionTree),
+    OpinionValue is 4.
+% Case 5: Only liking Prolog
+get_opinion_value(OpinionTree, OpinionValue) :-
+    only_like_prolog(OpinionTree),
+    OpinionValue is 5.
+% Case 6: Loving Prolog
+get_opinion_value(OpinionTree, OpinionValue) :-
+    love_prolog(OpinionTree),
+    OpinionValue is 6.
+get_opinion_value(_, 0).
+
+
+% GENIE PARSING HELPERS
+
+% true if opinion tree includes loving prolog
+love_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree1),
+    get_verb(SentenceTree1, Verb),
+    \+ dif(gv(love), Verb),
+    get_noun(SentenceTree1, Noun),
+    \+ dif(gn(prolog), Noun).
+love_prolog(OpinionTree) :-
+    get_next_opinion(OpinionTree, NextOpinion),
+    love_prolog(NextOpinion).
+
+% true if opinion tree includes liking prolog
+only_like_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree1),
+    get_verb(SentenceTree1, Verb),
+    \+ dif(gv(like), Verb),
+    get_noun(SentenceTree1, Noun),
+    \+ dif(gn(prolog), Noun).
+only_like_prolog(OpinionTree) :-
+    get_next_opinion(OpinionTree, NextOpinion),
+    only_like_prolog(NextOpinion).
+
+% true if opinion tree inlcudes like/loving haskell more than prolog
+% conjunction is more than, and first verb is like/love, and first noun is haskell
+% conjunction is less than, and first verb is like/love, and first noun is prolog
+enjoy_haskell_more_than_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree1),
+    get_conjunction(OpinionTree, Conjunction),
+    \+ dif(Conjunction, gcon(morethan)),
+    get_verb(SentenceTree1, Verb),
+    positive_verb(Verb),
+    get_noun(SentenceTree1, Noun),
+    \+ dif(Noun, gn(haskell)).
+enjoy_haskell_more_than_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree1),
+    get_conjunction(OpinionTree, Conjunction),
+    \+ dif(Conjunction, gcon(lessthan)),
+    get_verb(SentenceTree1, Verb),
+    positive_verb(Verb),
+    get_noun(SentenceTree1, Noun),
+    \+ dif(Noun, gn(prolog)).
+
+% true if opinion tree mentions prolog at all
+mention_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree),
+    get_noun(SentenceTree, Noun),
+    \+ dif(gn(prolog), Noun).
+mention_prolog(OpinionTree) :-
+    get_next_opinion(OpinionTree, NextOpinion),
+    mention_prolog(NextOpinion).
+
+% true if opinion tree includes verb hate at all
+includes_hate(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree),
+    get_verb(SentenceTree, Verb),
+    \+ dif(gv(hate), Verb).
+includes_hate(OpinionTree) :-
+    get_next_opinion(OpinionTree, NextOpinion),
+    includes_hate(NextOpinion).
+
+% true if opinion tree includes disliking prolog
+dislike_prolog(OpinionTree) :-
+    get_first_sentence(OpinionTree, SentenceTree),
+    get_verb(SentenceTree, Verb),
+    get_noun(SentenceTree, Noun),
+    \+ dif(gv(dontlike), Verb), \+ dif(gn(prolog), Noun).
+dislike_prolog(OpinionTree) :-
+    get_next_opinion(OpinionTree, NextOpinion),
+    dislike_prolog(NextOpinion).
+
+positive_verb(gv(love)).
+positive_verb(gv(like)).
+
+get_conjunction(go(_,Conjunction,_), Conjunction).
+get_next_opinion(go(_,_,OpinionTree), OpinionTree).
+
+get_noun(gs(_, VerbPhrase), Noun) :-
+    get_noun_in_vp(VerbPhrase, Noun).
+get_verb(gs(_, VerbPhrase), Verb) :-
+    get_verb_in_vp(VerbPhrase, Verb).
+
+get_noun_in_vp(gvp(_, NounPhrase), Noun) :-
+    get_noun_in_np(NounPhrase, Noun).
+get_verb_in_vp(gvp(Verb, _), Verb).
+
+get_noun_in_np(gnp(Noun), Noun).
+
+get_first_sentence(go(SentenceTree, _, _), SentenceTree).
+get_first_sentence(go(SentenceTree), SentenceTree).
+
+single_sentence_opinion(go(SentenceTree), SentenceTree).
+
+
+% GENIE OPINION GRAMMER
+% AN OPINION IS: A SENTENCE OR A (SENTENCE + CONJUNCTION + SENTENCE + OPINION)
+% A SENTENCE IS: PRONOUN + VERB PHRASE
+% A VERB PHRASE IS: VERB + NOUN PHRASE
+% A NOUN PHRASE IS: NOUN 
+% no determiners or preposition since the topic (haskell and prolog) is simple
+
+genie_opinion(go(GS)) --> genie_sentence(GS).
+genie_opinion(go(GS, GCON, GO)) --> genie_sentence(GS), genie_con(GCON), genie_opinion(GO).
+
+genie_sentence(gs(GPRON, GVP)) --> genie_pron(GPRON), genie_vp(GVP).
+genie_np(gnp(GN)) --> genie_n(GN).
+genie_vp(gvp(GV, GNP)) --> genie_v(GV), genie_np(GNP).
+
+genie_con(gcon(and)) --> [and].
+genie_con(gcon(but)) --> [but].
+genie_con(gcon(morethan)) --> [more, than].
+genie_con(gcon(lessthan)) --> [less, than].
+genie_n(gn(haskell)) --> [haskell].
+genie_n(gn(prolog))--> [prolog].
+genie_pron(gpron(i)) --> [i].
+
+genie_v(gv(like)) --> [like].
+genie_v(gv(hate)) --> [hate].
+genie_v(gv(love)) --> [love].
+% genie_v(gv(dislike)) --> [dislike].
+genie_v(gv(dontlike)) --> [dont, like].
+% genie_v(gv(dontlove)) --> [dont, love].
+
 % assertions and prints after player death
 die :-
     life_status(Status),
@@ -734,6 +983,11 @@ remove_from_inventory(item(I)) :-
 
 list_add(I, [], [I]).
 list_add(I, [H|T], [I|[H|T]]).
+
+stringlist_to_atom([], []).
+stringlist_to_atom([H|T], [A|B]) :-
+    string_to_atom(H, A),
+    stringlist_to_atom(T, B).
 
 % Resets items in states according to inventory
 % gold doesnt effect states
@@ -939,6 +1193,7 @@ position(person(zombie), east_state_1).
 position(person(wizard), west_state_1).
 position(person(wizard), south_east_state_1).
 position(person(salesman), west_state_2).
+position(person(genie), south_state_1).
 input(item(sword), a).
 input(item(shield), b).
 input(item(key), a).
@@ -956,6 +1211,7 @@ input(person(zombie), c).
 input(person(wizard), c).
 input(person(well), a).
 input(person(salesman), a).
+input(person(genie), e).
 item_name(item(sword), 'Sword').
 item_name(item(shield), 'Shield').
 item_name(item(key), 'Key').
@@ -981,6 +1237,7 @@ person_name(person(zombie), "Zombie").
 person_name(person(wizard), "Wizard").
 person_name(person(well), 'Magic Well').
 person_name(person(salesman), "Travelling Salesman").
+person_name(person(genie), "Genie").
 
 password(openable(chest), "sesame").
 password(openable(drawer), "haskell").
@@ -1029,6 +1286,7 @@ description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
 description_long(person(well), "a magic well that seems to be whispering your destiny to you.").
 description_long(person(salesman), "a salesman with a large trenchcoat full of items. He whistles a jaunty tune.").
+description_long(person(genie), "a saffron, gold lamp that seems to be ever so slightly moving.").
 description_long(inspectable(suspicious_bag), "a suspicious looking cloth bag that flaps in the wind.").
 description_long(inspectable(pile_of_rocks), "a pile of rocks, with a little glimmer of gold.").
 description_long(inspectable(hole_in_tree), "a large hole in the center of an old jungle tree.").
