@@ -681,11 +681,11 @@ get_open_items(InputPassword, Openable) :-
     same_password(InputPassword, Password),
     position(Item, Openable),
     opened_text(Openable, Text), write(Text), nl,
-    % retract(position(Item, Openable)),
     add_to_inventory(Item),
-    add_to_removed_openable_list(removed_openable_info(position(Item, Openable), been_opened(Openable, no))), !.
-    % retract(been_opened(Openable, no)),
-    % assert(been_opened(Openable, yes)), 
+    add_to_removed_openable_list(removed_openable_info(position(Item, Openable), been_opened(Openable, no))),
+    retract(been_opened(Openable, no)),
+    assert(been_opened(Openable, yes)),
+    retract(position(Item, Openable)), !. 
 get_open_items(_,_) :-
     write("That didn't work"), nl, !.
 
