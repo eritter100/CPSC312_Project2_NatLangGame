@@ -3,6 +3,7 @@
 :- dynamic(current_state/1).
 :- dynamic(inventory/1).
 :- dynamic(removed_person_list/1).
+:- dynamic(removed_item_list/1).
 :- dynamic(position/1).
 :- dynamic(life_status/1).
 :- dynamic(tutorial_needed/1).
@@ -16,6 +17,7 @@
 % starting inventory (list of strings), (maybe make a triple that corrends name of item to item?)
 inventory([]).
 removed_person_list([]).
+removed_item_list([]).
 current_state(start_state).
 life_status(alive).
 tutorial_needed(yes).
@@ -44,7 +46,10 @@ start :-
     shuffle_map,
     current_state(State),
     inventory(Inventory),
-    reset_state_items(Inventory), % !!!
+    removed_item_list(Items),
+    return_items_from_removed_item_list(Items),
+    retract(removed_item_list(Items)),
+    assert(removed_item_list([])),
     retract(inventory(Inventory)),
     assert(inventory([])), % add reset states func 
     removed_person_list(Characters),
@@ -372,11 +377,12 @@ move(_) :-
     write("Ummm... your dead!"), nl.
 
 % takes Item from current state and puts it into your inventory
-take(Item) :- % !!!
+take(Item) :-
     current_state(State),
     position(Item, State),
     \+ hidden_by(Item, _),
     input(Item, Move), 
+    add_to_removed_item_list(removed_item_info(Item, State, Move)),
     retract(position(Item, State)),
     retract(input(Item, Move)),
     life_status(alive),
@@ -665,7 +671,7 @@ get_open_items(InputPassword, Openable) :-
     retract(position(Item, Openable)),
     add_to_inventory(Item),
     /*
-    assert(position(Item, State)), % !!!
+    assert(position(Item, State)),
     assert(input(Item, e)),
     take(Item),
     */
@@ -1107,7 +1113,7 @@ add_to_removed_person_list(removed_person_info(person(P), State, Move)) :-
     list_add(removed_person_info(person(P), State, Move), Old_person_list, New_person_list),
     retract(removed_person_list(Old_person_list)),
     assert(removed_person_list(New_person_list)).
-    
+
 % return wizard / zombie / dragon / etc. to start position at start of each game
 return_characters_from_removed_person_list([removed_person_info(person(P), State, Option)|T]) :-
     assert(position(person(P), State)),
@@ -1115,6 +1121,19 @@ return_characters_from_removed_person_list([removed_person_info(person(P), State
     assert(input(person(P), Option)),
     return_characters_from_removed_person_list(T).
 return_characters_from_removed_person_list([]).
+
+add_to_removed_item_list(removed_item_info(item(I), State, Move)) :-
+    removed_item_list(Old_item_list),
+    list_add(removed_item_info(item(I), State, Move), Old_item_list, New_item_list),
+    retract(removed_item_list(Old_item_list)),
+    assert(removed_item_list(New_item_list)).
+
+% return wizard / zombie / dragon / etc. to start position at start of each game
+return_items_from_removed_item_list([removed_item_info(item(I), State, Option)|T]) :-
+    assert(position(item(I), State)),
+    assert(input(item(I), Option)),
+    return_items_from_removed_item_list(T).
+return_items_from_removed_item_list([]).
 
 % next option
 next_option(a,b).
