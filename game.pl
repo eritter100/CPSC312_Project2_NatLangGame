@@ -42,14 +42,14 @@ g :- move(g).
 % basic starter to the game
 start :-
     current_state(State),
-    removed_person_list(Characters),
-    return_characters_from_removed_person_list(Characters),
-    retract(removed_person_list(Characters)),
-    assert(removed_person_list([])),
     inventory(Inventory),
     reset_state_items(Inventory),
     retract(inventory(Inventory)),
     assert(inventory([])), % add reset states func 
+    removed_person_list(Characters),
+    return_characters_from_removed_person_list(Characters),
+    retract(removed_person_list(Characters)),
+    assert(removed_person_list([])),
     retract(current_state(State)),
     assert(current_state(start_state)),
     life_status(Status),
@@ -368,9 +368,9 @@ take(Item) :-
     current_state(State),
     position(Item, State),
     \+ hidden_by(Item, _),
-    % input(item(I), Move), 
+    input(item(I), Move), 
     retract(position(Item, State)),
-    % retract(input(item(I), Move)),
+    retract(input(item(I), Move)),
     life_status(alive),
     add_to_inventory(Item), describe, !.
 take(_) :-
@@ -414,7 +414,8 @@ interact(Person, TypeOfInteraction) :-
     % input(person(P), Move),
     life_status(alive),
     interaction(Person, TypeOfInteraction, RemoveStatus),
-    remove_person(position(Person, State), RemoveStatus),
+    % remove_person(position(Person, State), RemoveStatus),
+    remove_person(Person, State, RemoveStatus),
     % add_to_removed_person_list(position(Person, State)),
     % retract(position(Person, State)),
     % retract(input(person(P), Move)), 
@@ -422,12 +423,19 @@ interact(Person, TypeOfInteraction) :-
 interact(_) :-
     write("That's an invalid move!"), nl, !.
 
-
+/*
 remove_person(PersonPosition, yes) :-
     add_to_removed_person_list(PersonPosition),
     retract(PersonPosition).
+*/
 
-remove_person(_, no).
+remove_person(Person, State, yes) :-
+    input(Person, Move),
+    add_to_removed_person_list(removed_person_info(Person, State, Move)),
+    retract(position(Person, State)),
+    retract(input(Person, Move)).
+
+remove_person(_, _, no).
 % DRAGON ENCOUNTER
 % 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss completely
 % type of interaction does not matter, he is a dragon, there is no reasoning or talking, just fight!
@@ -826,16 +834,16 @@ write_contents([H|T]) :-
     write("Type "), write(I), write(" to interact with "), write(N), nl,
     write_contents(T).
 
-add_to_removed_person_list(position(person(P), State)) :-
+add_to_removed_person_list(removed_person_info(person(P), State, Move)) :-
     removed_person_list(Old_person_list),
-    list_add(position(person(P), State), Old_person_list, New_person_list),
+    list_add(removed_person_info(person(P), State, Move), Old_person_list, New_person_list),
     retract(removed_person_list(Old_person_list)),
     assert(removed_person_list(New_person_list)).
     
 % return wizard / zombie / dragon / etc. to start position at start of each game
-return_characters_from_removed_person_list([position(person(P), State)|T]) :-
+return_characters_from_removed_person_list([removed_person_info(person(P), State, Option)|T]) :-
     assert(position(person(P), State)),
-    get_next_option_index(State, Option),
+    %get_next_option_index(State, Option),
     assert(input(person(P), Option)),
     return_characters_from_removed_person_list(T).
 return_characters_from_removed_person_list([]).
@@ -845,15 +853,27 @@ next_option(a,b).
 next_option(b,c).
 next_option(c,d).
 next_option(d,e).
-
+/*
 get_next_option_index(State, Option) :-
     position(I, State),
-    increment_contents([I], a, Option). % , fail.
+    increment_contents([I], a, Option). %, fail.
 increment_contents([_|T], CurrentOption, FinalOption) :-
     next_option(CurrentOption, NextOption),
     increment_contents(T, NextOption, FinalOption).
 increment_contents([], CurrentOption, FinalOption) :-
     next_option(CurrentOption, FinalOption).
+*/
+% assumes options will not overfill
+get_next_option_index(State, Option) :-
+    increment_contents(a, State, Option).
+increment_contents(CurrentOption, State, FinalOption) :-
+    input_taken(CurrentOption, State),
+    next_option(CurrentOption, NextOption),
+    increment_contents(NextOption, State, FinalOption).
+increment_contents(CurrentOption, State, CurrentOption) :-
+    \+ input_taken(CurrentOption, State),!.
+
+input_taken(Option, State) :- position(I, State), input(I, Option).
 
 exits(State) :-
     path(State, Move, Exit, LockStatus),
