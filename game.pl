@@ -41,6 +41,7 @@ g :- move(g).
 */
 % basic starter to the game
 start :-
+    shuffle_map,
     current_state(State),
     inventory(Inventory),
     reset_state_items(Inventory),
@@ -1327,6 +1328,75 @@ get_strength(person(dragon), 11).
 % paths describe relation between Current_State, move, next_state, and next_state_lock_status
 % lock status is either: unlocked, or an item that is required to unlock the state
 
+
+shuffle_map :-
+    remove_all_states,
+    % add the inner 4 states around the base
+    random(0, 24, Random),
+    assign_4_random_nums(Random, R1, R2, R3, R4),
+    state_index(State1, R1),
+    state_index(State2, R2),
+    state_index(State3, R3),
+    state_index(State4, R4),
+    assert(path(start_state, east, State1, unlocked)),
+    assert(path(State1, west, start_state, unlocked)),
+    assert(path(start_state, west, State2, unlocked)),
+    assert(path(State2, east, start_state, unlocked)),
+    assert(path(start_state, north, State3, unlocked)),
+    assert(path(State3, south, start_state, unlocked)),
+    assert(path(start_state, south, State4, unlocked)),
+    assert(path(State4, north, start_state, unlocked)),
+    % add outer three states
+    random(0, 4, R5),
+    add_endgame_states(R5),
+    add_locked_state(R5).
+
+assign_4_random_nums(0, 0, 1, 2, 3).
+assign_4_random_nums(1, 0, 1, 3, 2).
+assign_4_random_nums(2, 0, 2, 1, 3).
+assign_4_random_nums(3, 0, 2, 3, 1).
+assign_4_random_nums(4, 0, 3, 1, 2).
+assign_4_random_nums(5, 0, 3, 2, 1).
+assign_4_random_nums(6, 1, 0, 2, 3).
+assign_4_random_nums(7, 1, 0, 3, 2).
+assign_4_random_nums(8, 1, 2, 0, 3).
+assign_4_random_nums(9, 1, 2, 3, 0).
+assign_4_random_nums(10, 1, 3, 0, 2).
+assign_4_random_nums(11, 1, 3, 2, 0).
+assign_4_random_nums(12, 2, 1, 0, 3).
+assign_4_random_nums(13, 2, 1, 3, 0).
+assign_4_random_nums(14, 2, 0, 1, 3).
+assign_4_random_nums(15, 2, 0, 3, 1).
+assign_4_random_nums(16, 2, 3, 1, 0).
+assign_4_random_nums(17, 2, 3, 0, 1).
+assign_4_random_nums(18, 3, 1, 2, 0).
+assign_4_random_nums(19, 3, 1, 0, 2).
+assign_4_random_nums(20, 3, 2, 1, 0).
+assign_4_random_nums(21, 3, 2, 0, 1).
+assign_4_random_nums(22, 3, 0, 1, 2).
+assign_4_random_nums(23, 3, 0, 2, 1).
+    
+add_endgame_states(DirectionNum) :-
+    direction_index(Direction, DirectionNum),
+    direction_oppsite(Direction, OppositeDirection),
+    path(start_state, Direction, State1, unlocked),
+    assert(path(State1, Direction, north_state_1, unlocked)),
+    assert(path(north_state_1, OppositeDirection, State1, unlocked)),
+    assert(path(north_state_1, Direction, north_state_2, item(key))),
+    assert(path(north_state_2, OppositeDirection, north_state_1, unlocked)), !.
+add_locked_state(OppositeDirectionNum) :-
+    direction_index(OppositeDirection, OppositeDirectionNum),
+    direction_oppsite(Direction, OppositeDirection),
+    path(start_state, Direction, State1, unlocked),
+    assert(path(State1, Direction, west_state_1, item(boots))),
+    assert(path(west_state_1, OppositeDirection, State1, unlocked)), !.
+
+remove_all_states :-
+    path(A, _, B, _),
+    retract(path(A, _, B, _)),
+    remove_all_states, fail.
+remove_all_states.
+
 path(start_state, east, east_state_1, unlocked).
 path(east_state_1, west, start_state, unlocked).
 path(start_state, west, west_state_1, item(boots)).
@@ -1351,6 +1421,29 @@ is_state(south_east_state_1).
 is_state(south_state_1).
 is_state(west_state_2).
 
+state_index(east_state_1, 0).
+state_index(south_east_state_1, 1).
+state_index(south_state_1, 2).
+state_index(west_state_2, 3).
+state_index(west_state_1, 4).
+state_index(north_state_1, 5).
+state_index(north_state_2, 6).
+state_index(start_state, 7).
+
+direction_index(north, 0).
+direction_index(east, 1).
+direction_index(south, 2).
+direction_index(west, 3).
+direction_index(north, 4).
+direction_index(east, 5).
+direction_index(south, 6).
+direction_index(west, 7).
+
+direction_oppsite(north, south).
+direction_oppsite(south, north).
+direction_oppsite(east, west).
+direction_oppsite(west, east).
+
 state_name(west_state_1, "cliffs").
 state_name(start_state, "lavender heath").
 state_name(east_state_1, "dark forest path").
@@ -1367,7 +1460,7 @@ state_neighbour_description(east_state_1, "a worn down gravel path, darkened by 
 state_neighbour_description(north_state_1, "a massive limestone wall with a large black gate.").
 state_neighbour_description(north_state_2, "behind the gate you see plumes of dark smoke rising into the air.").
 state_neighbour_description(south_east_state_1, "a jungle where you hear the terrible screams of jaguars and flesh-eating parrots.").
-state_neighbour_description(south_state_1, "beyond, you see a stormy beach, littered in jagged rocks.").
+state_neighbour_description(south_state_1, "you see a stormy beach, littered in jagged rocks.").
 state_neighbour_description(west_state_2, "a tiny, wodden trading post with a sign that says open.").
 
 % describe the current location
