@@ -41,7 +41,7 @@ g :- move(g).
 */
 % basic starter to the game
 start :-
-	shuffle_map,
+    shuffle_map,
     current_state(State),
     inventory(Inventory),
     reset_state_items(Inventory),
@@ -1072,26 +1072,26 @@ get_strength(person(dragon), 11).
 
 
 shuffle_map :-
-	remove_all_states,
-	% add the inner 4 states around the base
-	random(0, 24, Random),
-	assign_4_random_nums(Random, R1, R2, R3, R4),
-	state_index(State1, R1),
-	state_index(State2, R2),
-	state_index(State3, R3),
-	state_index(State4, R4),
-	assert(path(start_state, east, State1, unlocked)),
-	assert(path(State1, west, start_state, unlocked)),
-	assert(path(start_state, west, State2, unlocked)),
-	assert(path(State2, east, start_state, unlocked)),
-	assert(path(start_state, north, State3, unlocked)),
-	assert(path(State3, south, start_state, unlocked)),
-	assert(path(start_state, south, State4, unlocked)),
-	assert(path(State4, north, start_state, unlocked)),
-	% add outer three states
-	random(0, 4, R5),
-	add_endgame_states(R5),
-	add_locked_state(R5).
+    remove_all_states,
+    % add the inner 4 states around the base
+    random(0, 24, Random),
+    assign_4_random_nums(Random, R1, R2, R3, R4),
+    state_index(State1, R1),
+    state_index(State2, R2),
+    state_index(State3, R3),
+    state_index(State4, R4),
+    assert(path(start_state, east, State1, unlocked)),
+    assert(path(State1, west, start_state, unlocked)),
+    assert(path(start_state, west, State2, unlocked)),
+    assert(path(State2, east, start_state, unlocked)),
+    assert(path(start_state, north, State3, unlocked)),
+    assert(path(State3, south, start_state, unlocked)),
+    assert(path(start_state, south, State4, unlocked)),
+    assert(path(State4, north, start_state, unlocked)),
+    % add outer three states
+    random(0, 4, R5),
+    add_endgame_states(R5),
+    add_locked_state(R5).
 
 assign_4_random_nums(0, 0, 1, 2, 3).
 assign_4_random_nums(1, 0, 1, 3, 2).
@@ -1117,26 +1117,26 @@ assign_4_random_nums(20, 3, 2, 1, 0).
 assign_4_random_nums(21, 3, 2, 0, 1).
 assign_4_random_nums(22, 3, 0, 1, 2).
 assign_4_random_nums(23, 3, 0, 2, 1).
-	
+    
 add_endgame_states(DirectionNum) :-
-	direction_index(Direction, DirectionNum),
-	direction_oppsite(Direction, OppositeDirection),
-	path(start_state, Direction, State1, unlocked),
-	assert(path(State1, Direction, north_state_1, unlocked)),
-	assert(path(north_state_1, OppositeDirection, State1, unlocked)),
-	assert(path(north_state_1, Direction, north_state_2, item(key))),
-	assert(path(north_state_2, OppositeDirection, north_state_1, unlocked)), !.
+    direction_index(Direction, DirectionNum),
+    direction_oppsite(Direction, OppositeDirection),
+    path(start_state, Direction, State1, unlocked),
+    assert(path(State1, Direction, north_state_1, unlocked)),
+    assert(path(north_state_1, OppositeDirection, State1, unlocked)),
+    assert(path(north_state_1, Direction, north_state_2, item(key))),
+    assert(path(north_state_2, OppositeDirection, north_state_1, unlocked)), !.
 add_locked_state(OppositeDirectionNum) :-
-	direction_index(OppositeDirection, OppositeDirectionNum),
-	direction_oppsite(Direction, OppositeDirection),
-	path(start_state, Direction, State1, unlocked),
-	assert(path(State1, Direction, west_state_1, item(boots))),
-	assert(path(west_state_1, OppositeDirection, State1, unlocked)), !.
+    direction_index(OppositeDirection, OppositeDirectionNum),
+    direction_oppsite(Direction, OppositeDirection),
+    path(start_state, Direction, State1, unlocked),
+    assert(path(State1, Direction, west_state_1, item(boots))),
+    assert(path(west_state_1, OppositeDirection, State1, unlocked)), !.
 
 remove_all_states :-
-	path(A, _, B, _),
-	retract(path(A, _, B, _)),
-	remove_all_states, fail.
+    path(A, _, B, _),
+    retract(path(A, _, B, _)),
+    remove_all_states, fail.
 remove_all_states.
 
 path(start_state, east, east_state_1, unlocked).
