@@ -1,4 +1,5 @@
 % gamefile with natural language processing
+% to play type: start.
 
 :- dynamic(current_state/1).
 :- dynamic(inventory/1).
@@ -16,7 +17,7 @@
 % :- retractall(inventory(_)).
 % :- retractall(removed_person_list(_)).
 
-% starting inventory (list of strings), (maybe make a triple that corrends name of item to item?)
+% starting dynamic constants for the player
 inventory([]).
 removed_person_list([]).
 removed_item_list([]).
@@ -27,25 +28,8 @@ life_status(alive).
 tutorial_needed(yes).
 game_won(no).
 
-% basic movement inputs , not nat-lang yet
-% for direction
-/*
-east :- move(east).
-west :- move(west).
-north :- move(north).
-south :- move(south).
-*/
-% basic controls for interactions
-/*
-a :- move(a).
-b :- move(b).
-c :- move(c).
-d :- move(d).
-e :- move(e).
-f :- move(f).
-g :- move(g).
-*/
-% basic starter to the game
+% start function for the game. Resets everything in game to starting state
+% also functions as reset function
 start :-
     shuffle_map,
     current_state(State),
@@ -78,7 +62,7 @@ start :-
     assert(game_won(no)),
     describe, gameloop.
 
-% loops game for every input you give, only stopping when game_over is true (win, die, quit, reset)
+% loops game for every input you give, only stopping when game_over is true (win or die)
 gameloop :-
     repeat,
     say(InputCommand, "What do you do? "),
@@ -93,12 +77,12 @@ say(Ln, Prompt) :-
     read_line_to_string(user_input, String),
     split_string(String, " -", " ,?.!-", Ln), !.
 
-% true if L0 and L2 form difference list that is a legal command
+% parses a command and is true if L0 and L2 form difference list that is a legal command
 parsecommand(L0,L2, Command) :-
     verb_phrase(L0, L1, C1),
     noun_phrase(L1,L2, C2),
     make_command_list(C1, C2, Command), !.
-% for simple commands that are verb only
+% simple parsing for commands that are verb only
 parsecommand(L0,L1, Command) :-
     verb_phrase(L0, L1, C1),
     make_command_list(C1, [], Command), !.
@@ -116,10 +100,10 @@ noun_phrase(L0, L2, Ind) :-
     det(L0, L1, Ind),
     noun(L1, L2, Ind), !.
 
-% creates a list that of action (verb) and object (noun)
+% creates a command_list of an action (verb) and object (noun)
 make_command_list(V, N, [V|N]).
 
-% execute commands takes the parsed command (verb = action) (noun = thing), and performs such command
+% takes the command list and performs specific command
 execute_command([move|Thing]) :-
     is_direction_move(Thing),
     move(Thing), !.
@@ -150,6 +134,7 @@ execute_command([rub|Person]) :-
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
+% checks if game is over, true if player dies or game is won
 game_over_command(_) :-
     life_status(dead), nl,
     write("Thanks for playing!").
@@ -157,11 +142,7 @@ game_over_command(_) :-
     game_won(yes), nl,
     write("Thanks for playing!").
 
-is_direction_move(north).
-is_direction_move(south).
-is_direction_move(east).
-is_direction_move(west).
-
+% NATURAL LANGUAGE GRAMMAR CONSTANTS
 det(["the" | L], L,_).
 det(["a" | L], L,_).
 det(["this" | L], L,_).
@@ -186,9 +167,10 @@ verb(["move"| L], L, Ind) :- move_verb(Ind).
 verb(["go"| L], L, Ind) :- move_verb(Ind).
 verb(["walk"| L], L, Ind) :- move_verb(Ind).
 
-verb(["interact"| L], L, Ind) :- interact_verb(Ind). % interactions could be deepened, just create new functions and interactions (fight and talk = diff outcomes!)
+verb(["interact"| L], L, Ind) :- interact_verb(Ind). 
 verb(["talk"| L], L, Ind) :- interact_verb(Ind).
 verb(["approach"| L], L, Ind) :- interact_verb(Ind).
+
 verb(["fight"| L], L, Ind) :- fight_verb(Ind).
 verb(["kill"| L], L, Ind) :- fight_verb(Ind).
 verb(["threaten"| L], L, Ind) :- fight_verb(Ind).
@@ -222,11 +204,10 @@ verb(["check"| L], L, Ind) :- check_verb(Ind).
 verb(["rub"| L], L, Ind) :- rub_verb(Ind).
 
 noun(["south" | L], L, Ind) :- south_noun(Ind).
-% noun(["down" | L], L, Ind) :- south_noun(Ind).
 noun(["west" | L], L, Ind) :- west_noun(Ind).
-% noun(["left" | L], L, Ind) :- west_noun(Ind).
+noun(["east" | L], L, Ind) :- east_noun(Ind).
+noun(["north" | L], L, Ind) :- north_noun(Ind).
 
-% EX (could abstract this more)
 noun(["heath"| L], L, Ind) :- get_corresponding_direction(start_state, Ind).
 noun(["lavender", "heath"| L], L, Ind) :- get_corresponding_direction(start_state, Ind).
 noun(["wall"| L], L, Ind) :- get_corresponding_direction(north_state_1, Ind).
@@ -242,12 +223,6 @@ noun(["beach"| L], L, Ind) :- get_corresponding_direction(south_state_1, Ind).
 noun(["stormy", "beach"| L], L, Ind) :- get_corresponding_direction(south_state_1, Ind).
 noun(["gate"| L], L, Ind) :- get_corresponding_direction(north_state_2, Ind).
 noun(["black","gate"| L], L, Ind) :- get_corresponding_direction(north_state_2, Ind).
-
-
-noun(["east" | L], L, Ind) :- east_noun(Ind).
-% noun(["right" | L], L, Ind) :- east_noun(Ind).
-noun(["north" | L], L, Ind) :- north_noun(Ind).
-% noun(["up" | L], L, Ind) :- north_noun(Ind).
 
 noun(["key" | L], L, Ind) :- key_noun(Ind).
 noun(["sword" | L], L, Ind) :- sword_noun(Ind).
@@ -279,17 +254,14 @@ noun(["lamp"| L], L, Ind) :- genie_noun(Ind).
 get_corresponding_direction(DestinationState, Direction) :-
     current_state(State),
     path(State, Direction, DestinationState, _).
-% we could make it so that we only have 1 move verb clause (the one below)
-% and then use that to execute all types of moves (motion, interaction, fight)
-% or we could make more clauses (interact_verb, fight_verb, etc.)
 
+% Verb and Noun relations that correspond to specific functions or facts
 die_verb(die).
 map_verb(map).
 move_verb(move). 
 interact_verb(interact).
 take_verb(take).
 describe_verb(describe). 
-% inventory_verb(bag). 
 inspect_verb(inspect).
 fight_verb(fight).
 open_verb(open).
@@ -302,7 +274,6 @@ south_noun(south).
 east_noun(east).
 west_noun(west).
 inventory_noun(bag).
-
 key_noun(item(key)).
 sword_noun(item(sword)).
 shield_noun(item(shield)).
@@ -310,7 +281,6 @@ map_noun(item(gameMap)).
 boots_noun(item(boots)).
 pearl_noun(item(pearl)).
 strength_noun(strength).
-
 wizard_noun(person(wizard)).
 zombie_noun(person(zombie)).
 dragon_noun(person(dragon)).
@@ -327,9 +297,7 @@ chest_noun(openable(chest)).
 drawer_noun(openable(drawer)).
 salesman_noun(person(salesman)).
 
-% north_noun(cliffs) :- % here we check if current state is state where north_state=cliffs for example
-
-% describe is used to describe the current state 
+% describe is used to describe the current state, its contents, and neighbors 
 describe :-
     life_status(alive),
     game_won(no),
@@ -339,6 +307,7 @@ describe :-
     life_status(dead), !. % write nothing if dead
 describe :-
     game_won(yes), !. % write nothing if game is won
+
 % write_state writes out the environment of every state to the screen, as well as how they connect to other states
 write_state(start_state) :-
     tutorial_needed(Status), (\+ dif(yes, Status)),
@@ -414,7 +383,7 @@ check(strength) :-
 check(_) :-
     write("That's an invalid move!"), nl, !.
 
-% call with an inspectable thing (thinking something like: inspect(hole_in_tree) --> you see a bracer in the tree someone hid!, then player can say 'take bracer'...)
+% Inspects an inspectable, giving more detail on that thing in the environment, or revealing a hidden item
 inspect(Inspectable) :-
     current_state(State),
     position(Item, State),
@@ -430,10 +399,10 @@ inspect(Inspectable) :-
 inspect(_) :-
     write("That's an invalid move!"), nl, !.
 
-% call with person(Person), interact works as default interaction for talk and approach
-% INTERACTIONS ARE EITHER GOOD OR BAD
-% GOOD INTERACTIONS: talk, approach, call out.
-% BAD INTERACTIONS: fight, stab(if have sword), hurt, kill
+% INTERACTIONS 
+% INTERACTIONS ARE EITHER: GOOD OR BAD
+% GOOD INTERACTIONS: talk, approach, interact.
+% BAD INTERACTIONS: fight, stab(if have sword), hurt, kill, etc.
 % type of interaction doesnt matter for dragon or zombie since they are MOBS/inherently bad
 interact(Person, TypeOfInteraction) :-
     current_state(State),
@@ -450,12 +419,6 @@ interact(Person, TypeOfInteraction) :-
 interact(_) :-
     write("That's an invalid move!"), nl, !.
 
-/*
-remove_person(PersonPosition, yes) :-
-    add_to_removed_person_list(PersonPosition),
-    retract(PersonPosition).
-*/
-
 remove_person(Person, State, yes) :-
     input(Person, Move),
     add_to_removed_person_list(removed_person_info(Person, State, Move)),
@@ -463,8 +426,8 @@ remove_person(Person, State, yes) :-
     retract(input(Person, Move)).
 
 remove_person(_, _, no).
-% DRAGON ENCOUNTER
-% 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss completely
+% DRAGON INTERACTION
+% 5 interactions: 1 win, 1 loss with too little strength, 1 loss with no weapon, 1 loss with basic sword, 1 loss otherwise
 % type of interaction does not matter, he is a dragon, there is no reasoning or talking, just fight!
 interaction(person(dragon), _, yes) :-
     inventory(CurrentInventory),
@@ -513,8 +476,8 @@ interaction(person(dragon), _, no) :-
     die.
 
 % SALESMAN interaction
-% good interaction - talk to him, he sells you item and runs off happy with a salesman
-% bad interaction - you try to kill him, but in doing so you either die or lose your sword.
+% good interaction - he sells you item and runs off happy
+% bad interaction - you try to kill him, but in doing so you dont get access to what he sold
 
 interaction(person(salesman), good, SaleStatus) :-
     inventory(CurrentInventory),
@@ -530,8 +493,8 @@ interaction(person(salesman), bad, yes) :-
     write("Instead of getting his wares, his body disintegrates into dust. You wonder what you missed out on"), nl.
 
 % ZOMBIE ENCOUNTER
-% victory - if player is strong enough to defeat zombie (based on contents of inventory),
-% then an item in inventory is sacrificed to defeat zombie
+% always a bad interaction
+% victory - if player is strong enough to defeat zombie (based on contents of inventory), then an item in inventory is sacrificed to defeat zombie
 interaction(person(zombie), _, yes) :-
     get_strength(person(zombie), MonsterStrength),
     get_player_strength(PlayerStrength),
@@ -578,12 +541,14 @@ interaction(person(wizard), bad, yes) :-
     add_to_inventory(item(gold)),
     write("You tried to attack the wizard but he was nimble and got away. In his escape he dropped some gold!"), nl,
     nl.
+% unfriendly encounter - wizard is stronger than player, and turns them into frog (gameover)
 interaction(person(wizard), bad, no) :-
     get_strength(person(wizard), MonsterStrength),
     get_player_strength(PlayerStrength),
     PlayerStrength =< MonsterStrength,
     write("Oh no! The wizard turned you into a frog!"), nl,
     die.
+% friendly encoutner - with no sword, wizard gives player some gold
 interaction(person(wizard), good, yes) :-
     inventory(Inventory),
     \+ member(item(sword), Inventory),
@@ -616,7 +581,7 @@ interaction(person(well), good, yes) :-
     write("The wishing well growls ominously."), nl,
     write("You draw your sword to attack, but suddenly the well transforms into a wizard!"), nl,
     nl.
-% neutral encounter - the well gives you life advice and teleports you somewhere else
+% bad encounter - the well gives you life advice and teleports you somewhere else
 interaction(person(well), good, no) :-
     write("You lean over the well, entranced."), nl,
     write("\'Oh brave hero!\' The well calls out, \'You must defeat the dragon! To do that, you must have a magic sword."),
@@ -628,6 +593,7 @@ interaction(person(well), good, no) :-
     move(north),
     nl.
 
+% Writes the layout of the states to help player navigate
 map :-
     inventory(I),
     member(item(gameMap), I),
@@ -640,6 +606,7 @@ map :-
     not(member(item(gameMap), I)),
     write("Sorry! You don't have a map!"), nl.
 
+%  Helper to write/describe neighbors to a state
 write_neighbours(State) :-
     write_neighbour(north, State, "   "),
     write_neighbour(east, State, "   "),
@@ -662,6 +629,8 @@ adjascent_cardinal_positions(east, south).
 adjascent_cardinal_positions(south, west).
 adjascent_cardinal_positions(west, north).
 
+% Opens an openable if player gives correct password
+% if already open, gives true
 open(Openable) :-
     current_state(State),
     been_opened(Openable, no),
@@ -692,6 +661,8 @@ get_open_items(_,_) :-
 same_password([H|[]], Str) :-
     \+ dif(H, Str), !.
 
+% Person gives player Item, in exchange of losing TradeItem, if they say yes.
+% Otherwise, no sale.
 sale("yes", Item, Person, TradeItem, yes) :-
     item_name(Item, Name),
     position(Item, Person),
@@ -714,6 +685,7 @@ rub(person(genie)) :-
     write("The genie traps you in a cloud of smoke and says: You do not leave until you answer my question!"), nl,
     genie_interaction.
 
+% Repeat the interaction until the player gives a valid opinion
 genie_interaction :-
     repeat,
     say(Input, "The genie says: what is your opinion on haskell and prolog? And respond in a natural, DCG-way I understand!"),
@@ -756,7 +728,7 @@ genie_reaction(_) :-
 % Checks to make sure opinion is valid
 % valid opinion does not have the same object noun multiple times
 % ex. 'I like haskell and I hate haskell', is not valid (in our context)
-% ex. 'I love haskell but I love prolog', is not valid either
+% ex. 'I love haskell but I love prolog', is not valid either (cant use but conjunction like that)
 % single sentence opinions are always valid (1 object noun)
 valid_opinion(go(SentenceTree,Conjunction, OpinionTree)) :-
     valid_conjunction_use(SentenceTree, Conjunction, OpinionTree),
@@ -765,8 +737,7 @@ valid_opinion(go(SentenceTree,Conjunction, OpinionTree)) :-
 valid_opinion(go(_)). 
 
 
-% conjunction use is always valid except in the case that but is used with the same verb in each 
-% connecting sentence
+% conjunction use is always valid except in the case that but is used with the same verb in each connecting sentence
 valid_conjunction_use(SentenceTree, gcon(but), OpinionTree) :-
     get_verb(SentenceTree, Verb1),
     get_first_sentence(OpinionTree, SentenceTree2),
@@ -784,7 +755,6 @@ valid_conjunction_use(_, gcon(lessthan), _).
 valid_conjunction_use(_, gcon(and), _).
 
 % checks to see if sentence tree and opinion tree has same object noun at all
-% also checks if conjunction but is used, and verb is same in each sentence
 valid_opinion_meaning(SentenceTree, OpinionTree) :-
     get_noun(SentenceTree, Noun1),
     get_first_sentence(OpinionTree, SentenceTree2),
@@ -800,7 +770,6 @@ valid_opinion_meaning(SentenceTree, OpinionTree) :-
 
 % Mutliple different values of opinion
 % Case 1: Tree includes word 'hate'
-% all cases after verified to not include 'hate'
 get_opinion_value(OpinionTree, OpinionValue) :-
     includes_hate(OpinionTree),
     OpinionValue is 1.
@@ -829,7 +798,6 @@ get_opinion_value(_, 0).
 
 
 % GENIE PARSING HELPERS
-
 % true if opinion tree includes loving prolog
 love_prolog(OpinionTree) :-
     get_first_sentence(OpinionTree, SentenceTree1),
@@ -948,9 +916,7 @@ genie_pron(gpron(i)) --> [i].
 genie_v(gv(like)) --> [like].
 genie_v(gv(hate)) --> [hate].
 genie_v(gv(love)) --> [love].
-% genie_v(gv(dislike)) --> [dislike].
 genie_v(gv(dontlike)) --> [dont, like].
-% genie_v(gv(dontlove)) --> [dont, love].
 
 % assertions and prints after player death
 die :-
@@ -964,6 +930,7 @@ die :-
 restart_instructions :-
     write("Type halt. to quit out entirely, or start. to try again!"), nl.
 
+% unlocks a locked state if player posses unlockitem
 unlock(_,_,_,unlocked). % given any unlocked state, state is unlock
 unlock(PathState, Move, State, UnlockItem) :-
     inventory(CurrentInventory),
@@ -985,7 +952,7 @@ list_remove(X, [H|T], [H|L]) :-
     dif(X,H),
     list_remove(X,T,L).
 
-
+% add and remove item to inventory helpers
 add_to_inventory(item(I)) :-
     inventory(OldInventory),
     item_name(item(I), Name),
@@ -1007,6 +974,7 @@ remove_from_inventory(item(I)) :-
 list_add(I, [], [I]).
 list_add(I, [H|T], [I|[H|T]]).
 
+% takes list of strings and makes it a list of atoms
 stringlist_to_atom([], []).
 stringlist_to_atom([H|T], [A|B]) :-
     string_to_atom(H, A),
@@ -1079,6 +1047,7 @@ add_to_removed_inspected_list(hidden_by(Item, Inspectable)) :-
     retract(removed_inspectable_list(Old_inspectable_list)),
     assert(removed_inspectable_list(New_inspectable_list)).
 
+% return inspectables that hide items to start position
 return_inspectables_from_removed_inspectable_list([]).
 return_inspectables_from_removed_inspectable_list([hidden_by(Item, Inspectable)| T]) :-
     assert(hidden_by(Item, Inspectable)),
@@ -1090,6 +1059,7 @@ add_to_removed_openable_list(removed_openable_info(position(Item, Openable), bee
     retract(removed_openable_list(Old_openable_list)),
     assert(removed_openable_list(New_openable_list)).
 
+% return openables to not opened state, and gives them their starting item back
 return_openables_from_removed_openable_list([]).
 return_openables_from_removed_openable_list([removed_openable_info(position(Item, Openable), been_opened(Openable, no))| T]) :-
     assert(position(Item, Openable)),
@@ -1124,6 +1094,7 @@ increment_contents(CurrentOption, State, CurrentOption) :-
 
 input_taken(Option, State) :- position(I, State), input(I, Option).
 
+% NO LONGER USED, PREVIOUSLY USED FOR FIRST BUILD OF GAME
 exits(State) :-
     path(State, Move, Exit, LockStatus),
     write_exits(Move, Exit, LockStatus), fail.
@@ -1138,7 +1109,7 @@ write_exits(Move, Exit, UnlockItem) :-
     item_name(UnlockItem, ItemName),
     write("Type "), write(Move), write(" to  "), write(Name), write(" [LOCKED, REQUIRES: "), write(ItemName), write(" ]"), nl.
 
-
+% tutorial and help text
 tutorial :-
     write("Welcome to the game, this is a text-based adventure game!"), nl,
     write("Current basic rules are as follows:"), nl,
@@ -1155,7 +1126,7 @@ writeall([]).
 writeall([H|T]) :-
     write(H), nl,
     writeall(T).
-% ITEMS
+% ITEMS AND PROPERTIES
 % Items their position in start of game. Currently only in states, future could be in chests, boxes, given to player by NPC etc.
 % may change formatting so that its: item(name, property, value), (ex, item(sword, position, east_state_1)) 
 
@@ -1418,6 +1389,11 @@ is_state(north_state_2).
 is_state(south_east_state_1).
 is_state(south_state_1).
 is_state(west_state_2).
+
+is_direction_move(north).
+is_direction_move(south).
+is_direction_move(east).
+is_direction_move(west).
 
 state_index(east_state_1, 0).
 state_index(south_east_state_1, 1).
