@@ -726,6 +726,9 @@ genie_reaction(5) :-
     write("The genie and the lamp vanish!"), !.
 genie_reaction(6) :-
     write("The genie says: You noble being, are man of taste and culture! Take this!"), nl,
+    position(item(helmet), Person),
+    add_to_inventory(item(helmet)),
+    retract(position(item(helmet), Person)),
     write("The genie and the lamp vanish!"), !.
 genie_reaction(_) :-
     write("The genie says: Hmm... I'm confused"),
@@ -1046,6 +1049,12 @@ reset_state_items([H|T]) :-
     \+ (position(H, person(salesman))),
     assert(position(H, person(salesman))),
     reset_state_items(T).
+% reset helmet to genie
+reset_state_items([H|T]) :-
+    \+ dif(H, item(helmet)),
+    \+ (position(H, person(genie))),
+    assert(position(H, person(genie))),
+    reset_state_items(T).
 % reset armour to chest
 reset_state_items([H|T]) :-
     \+ dif(H, item(armour)),
@@ -1182,6 +1191,7 @@ position(item(ring), openable(drawer)).
 position(item(pendant), person(salesman)).
 position(item(pearl), south_state_1).
 position(item(magic_sword), person(well)).
+position(item(helmet), person(genie)).
 position(openable(chest), south_east_state_1).
 position(openable(drawer), west_state_2).
 position(inspectable(hole_in_tree), south_east_state_1).
@@ -1226,6 +1236,7 @@ item_name(openable(drawer), "Drawer").
 item_name(item(pendant), 'Magical Pendant').
 item_name(item(pearl), 'Pearl').
 item_name(item(ring), 'Ruby Ring').
+item_name(item(helmet), 'Genie Helmet').
 inspectable_name(inspectable(suspicious_bag), "Suspicious Bag").
 inspectable_name(inspectable(pile_of_rocks), "Pile of Rocks").
 inspectable_name(inspectable(hole_in_tree), "Hole in Tree").
@@ -1282,6 +1293,7 @@ description_long(item(gameMap), "a large, crumbling parchment map.").
 description_long(item(boots), " a heavy pair of leather boots, perfect for scaling cliffs!").
 description_long(item(pendant), " a heavy, ruby pendant that's warm to the touch.").
 description_long(item(pearl), " a lovely, platinum pearl. This has gotta be worth something to somebody!").
+description_long(item(helmet), " a sparkling helmet lined with colorful jewels!").
 description_long(person(dragon), "a massive, red dragon. He's busy with his lunch so he doesn't notice you at first.").
 description_long(person(zombie), "a zombie drooling brains.").
 description_long(person(wizard), "a wizard is practicing his spells, shooting violent black and purple zaps of lightening.").
@@ -1316,6 +1328,7 @@ get_strength(item(boots), 1) :- !.
 get_strength(item(ring), 1) :- !.
 % get_strength(item(gameMap), 0).
 get_strength(item(pendant), 2) :- !.
+get_strength(item(helmet), 2) :- !.
 get_strength(item(_), 0).
 get_strength(person(zombie), 4).
 get_strength(person(dragon), 4).
