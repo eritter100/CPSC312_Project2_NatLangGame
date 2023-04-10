@@ -125,6 +125,8 @@ execute_command([open|Openable]) :-
     open(Openable), !.
 execute_command([check|Item]) :-
     check(Item), !.
+execute_command([help|_]) :-
+    help,!.
 execute_command(_) :-
     write("There is a time and place for everything, but not now!"), nl.
 
@@ -157,6 +159,7 @@ prep(L, L, _).
 
 verb(["die"| L], L, Ind) :- die_verb(Ind).
 
+verb(["help"| L], L, Ind) :- help_verb(Ind).
 verb(["map"| L], L, Ind) :- map_verb(Ind).
 
 verb(["move"| L], L, Ind) :- move_verb(Ind).
@@ -268,6 +271,7 @@ inspect_verb(inspect).
 fight_verb(fight).
 open_verb(open).
 check_verb(check).
+help_verb(help).
 
 north_noun(north).
 south_noun(south).
@@ -874,8 +878,14 @@ tutorial :-
     write("Type 'help.' for more help on commands"), nl, nl, nl, nl,
     write("You wake up in the middle of a peaceful, lavender heath surrounded by forest and cliffs. Some may even call it the central heath."), nl.
 help :-
-    write("list of all commands go here").
+    write("Here is a list of all commands: "), nl,
+    findall(C, verb([C|_],_,_), L),
+    writeall(L).
 
+writeall([]).
+writeall([H|T]) :-
+    write(H), nl,
+    writeall(T).
 % ITEMS
 % Items their position in start of game. Currently only in states, future could be in chests, boxes, given to player by NPC etc.
 % may change formatting so that its: item(name, property, value), (ex, item(sword, position, east_state_1)) 
