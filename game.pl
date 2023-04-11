@@ -72,6 +72,8 @@ gameloop :-
 
 % NATURAL LANGUAGE PROCESSOR
 % prompts user to input, and tokenizes input into list
+% Based on the version used in lecture
+
 say(Ln, Prompt) :-
     write(Prompt), nl, flush_output(current_output),
     read_line_to_string(user_input, String),
