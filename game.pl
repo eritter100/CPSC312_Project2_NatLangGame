@@ -590,7 +590,6 @@ interaction(person(well), good, no) :-
     current_state(State),
     retract(current_state(State)),
     assert(current_state(start_state)),
-    move(north),
     nl.
 
 % Writes the layout of the states to help player navigate
